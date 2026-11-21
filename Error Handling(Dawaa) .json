@@ -1,0 +1,1073 @@
+{
+  "name": "Error Handling(Dawaa)",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c1de31c8-223f-491a-9350-ea838f897ae9",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const err = $input.first().json;\nconst message = err.execution?.error?.message || 'Unknown error';\nconst nodeName = err.execution?.lastNodeExecuted || 'Unknown node';\nconst workflowName = err.workflow?.name || 'Unknown workflow';\nconst executionId = err.execution?.id || '';\nconst executionLink = err.execution?.url || '';\n\n// Classify error type, severity, and suggested fix\nlet type = 'General Error';\nlet severity = 'warning';\nlet suggestedFix = 'Inspect the execution link and node input/output data.';\n\nif (/401|403|auth|token|unauthorized|forbidden/i.test(message)) {\n  type = 'Auth Error';\n  severity = 'critical';\n  suggestedFix = 'Check API credentials, OAuth tokens, or permissions for this node.';\n} else if (/429|rate limit|quota/i.test(message)) {\n  type = 'Rate Limit';\n  severity = 'warning';\n  suggestedFix = 'Add a Wait node or enable Retry On Fail with backoff.';\n} else if (/timeout|ETIMEDOUT|ECONNRESET|502|503|504/i.test(message)) {\n  type = 'Network / Timeout';\n  severity = 'critical';\n  suggestedFix = 'External service is slow or down. Enable Retry On Fail.';\n} else if (/500|database|postgres|supabase|sheet/i.test(message)) {\n  type = 'System / DB Error';\n  severity = 'critical';\n  suggestedFix = 'Verify database/sheet connection and payload format.';\n} else if (/undefined|null|JSON|parse|syntax/i.test(message)) {\n  type = 'Data / Parsing Error';\n  severity = 'warning';\n  suggestedFix = 'Check upstream node output for missing fields or invalid JSON.';\n}\n\nconst fingerprint = `${workflowName}|${nodeName}|${type}`.toLowerCase().replace(/\\s+/g, '_');\nconst epochMinute = Math.floor(Date.now() / 60000);\n\nreturn [{\n  json: {\n    timestamp: new Date().toISOString(),\n    workflow: workflowName,\n    node: nodeName,\n    type,\n    severity,\n    message,\n    suggested_fix: suggestedFix,\n    execution_id: executionId,\n    execution_link: executionLink,\n    fingerprint,\n    epoch_minute: epochMinute,\n    alerted: 'yes',\n    status: 'open'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "742f02bf-9235-46e8-8036-4bb2a39f51c0",
+      "name": "Classify Error"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1BC3qee6Hsr-RWmKyU0gJlTm33L6nmsAVt36-UDJvHsM",
+          "mode": "list",
+          "cachedResultName": "Error logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BC3qee6Hsr-RWmKyU0gJlTm33L6nmsAVt36-UDJvHsM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BC3qee6Hsr-RWmKyU0gJlTm33L6nmsAVt36-UDJvHsM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Time": "={{ $json.timestamp }}",
+            "Workflow": "={{ $json.workflow }}",
+            "Node": "={{ $json.node }}",
+            "Severity": "={{ $json.severity }}",
+            "Message": "={{ $json.message }}",
+            "Execution Link": "={{ $json.execution_link }}",
+            "Type": "={{ $json.type }}",
+            "Suggested Fix": "={{ $json.suggested_fix }}",
+            "Execution ID": "={{ $json.execution_id }}",
+            "Fingerprint": "={{ $json.fingerprint }}",
+            "Epoch Minute": "={{ $json.epoch_minute }}",
+            "Alerted": "={{ $json.alerted }}",
+            "Status": "={{ $json.status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Time",
+              "displayName": "Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Workflow",
+              "displayName": "Workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Node",
+              "displayName": "Node",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Type",
+              "displayName": "Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Severity",
+              "displayName": "Severity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Suggested Fix",
+              "displayName": "Suggested Fix",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Execution ID",
+              "displayName": "Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Execution Link",
+              "displayName": "Execution Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Fingerprint",
+              "displayName": "Fingerprint",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Epoch Minute",
+              "displayName": "Epoch Minute",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Alerted",
+              "displayName": "Alerted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nnmmm",
+              "displayName": "nnmmm",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        0
+      ],
+      "id": "29aab0fa-b24c-4c32-87bf-beb2de4d366c",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pYsU4OaieiWxdjhG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "7714106732",
+        "text": "=🚨 n8n Error ({{ $json.Severity }})\nWorkflow: {{ $json.Workflow }}\nNode: {{ $json.Node }}\nType: {{ $json.Type }}\nError: {{ $json.Message }}\nFix: {{ $json['Suggested Fix'] }}\nLink: {{ $json['Execution Link'] }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "b49fb3e7-c9eb-4059-b2f0-6cfa029eb1fd",
+      "name": "Send a text message",
+      "webhookId": "24003a5c-ffa2-4308-bbc2-308c528fc753",
+      "credentials": {
+        "telegramApi": {
+          "id": "EBO3DSIo4SzsyTY1",
+          "name": "SOUS_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "3668389c-3757-4f12-9c80-da3e3ced5241",
+              "leftValue": "={{ $('Classify Error').item.json.severity }}",
+              "rightValue": "critical",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        896,
+        0
+      ],
+      "id": "b44da391-052d-45d1-838c-e89595c6f157",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "mostafa100pwg@gmail.com",
+        "subject": "=[CRITICAL] n8n Error in {{ $json.workflow }}",
+        "message": "=Workflow: {{ $json.workflow }} Node: {{ $json.node }} Time: {{ $json.timestamp }} Error: {{ $json.message }} Execution: {{ $json.execution_url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1152,
+        -80
+      ],
+      "id": "33961ac0-865a-44aa-9cee-9c7847e8db4c",
+      "name": "Send a message",
+      "webhookId": "7f897205-c22e-46f1-80cd-ef67266894f2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "8U6vcJdKIcCaAZOc",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        208
+      ],
+      "id": "6d53a4d9-7424-4c11-9821-f8db638b3359",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = Date.now();\nconst reservations = $('Read Reservations').all().map(i => i.json);\n\nfunction parseDate(val) {\n  if (!val) return NaN;\n  const s = String(val).trim();\n  // Normalize \"YYYY-MM-DD H:mm\" -> \"YYYY-MM-DDTHH:mm:00\"\n  const m = s.match(/^(\\d{4}-\\d{2}-\\d{2})\\s+(\\d{1,2}):(\\d{2})(?::(\\d{2}))?$/);\n  if (m) {\n    const [, date, h, min, sec = '00'] = m;\n    return new Date(`${date}T${h.padStart(2, '0')}:${min}:${sec}`).getTime();\n  }\n  return new Date(s).getTime();\n}\n\nconst expired = reservations.filter(r => {\n  const isReserved = String(r.status || '').trim().toLowerCase() === 'reserved';\n  const expTime = parseDate(r.expires_at);\n  return isReserved && !isNaN(expTime) && expTime < now;\n});\n\nreturn expired.map(r => ({ json: r }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        160
+      ],
+      "id": "1ef3603a-3365-47a9-834a-c5aa26cc5b08",
+      "name": "Expired lines",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk",
+          "mode": "list",
+          "cachedResultName": "Dawaa Pharmacy Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 762278481,
+          "mode": "list",
+          "cachedResultName": "Reservations",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit#gid=762278481"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "res_id": "={{ $json.res_id }}",
+            "status": "expired"
+          },
+          "matchingColumns": [
+            "res_id"
+          ],
+          "schema": [
+            {
+              "id": "res_id",
+              "displayName": "res_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "wa_phone_id",
+              "displayName": "wa_phone_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "sku",
+              "displayName": "sku",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "qty",
+              "displayName": "qty",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "total_egp",
+              "displayName": "total_egp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "expires_at",
+              "displayName": "expires_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "pharmacist",
+              "displayName": "pharmacist",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "note",
+              "displayName": "note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        944,
+        160
+      ],
+      "id": "64011617-46b9-457d-9bb3-57588d5ef6fe",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pYsU4OaieiWxdjhG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk",
+          "mode": "list",
+          "cachedResultName": "Dawaa Pharmacy Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1843831153,
+          "mode": "list",
+          "cachedResultName": "Catalog",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit#gid=1843831153"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        464,
+        208
+      ],
+      "id": "0bca601d-af5b-4111-8888-60f24b8446f6",
+      "name": "Read Catalog",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pYsU4OaieiWxdjhG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk",
+          "mode": "list",
+          "cachedResultName": "Dawaa Pharmacy Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 762278481,
+          "mode": "list",
+          "cachedResultName": "Reservations",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit#gid=762278481"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "reserved"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        208
+      ],
+      "id": "05d4c155-0305-44b8-a93e-7fa62b8547d8",
+      "name": "Read Reservations",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pYsU4OaieiWxdjhG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1384774488060812",
+        "recipientPhoneNumber": "201060034670",
+        "textBody": "=Hi {{ $json.customer_name || 'there' }}, your reservation for {{ $json.item_name }} has expired. Please reply if you would like to place a new order.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        1168,
+        160
+      ],
+      "id": "61217baf-4c1e-49cb-b9e5-d9b0143d70d3",
+      "name": "Send message",
+      "webhookId": "d8e63792-1f28-42c6-bbc2-ce013d89c7fb",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "YCq8qSEwzHCRSANP",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = Date.now();\nconst reservations = $('Read Reservations').all().map(i => i.json);\nconst catalog = $('Read Catalog').all().map(i => i.json);\n\n// Sum quantities of expired reservations by SKU\nconst toRestock = {};\nfor (const r of reservations) {\n  const isPending = String(r.status || '').toLowerCase() === 'pending';\n  const expTime = new Date(r.expires_at).getTime();\n  if (isPending && !isNaN(expTime) && expTime < now) {\n    const sku = r.sku;\n    toRestock[sku] = (toRestock[sku] || 0) + Number(r.qty || 0);\n  }\n}\n\n// Calculate new stock totals against the Catalog\nconst updates = [];\nfor (const [sku, addQty] of Object.entries(toRestock)) {\n  const item = catalog.find(c => c.sku === sku);\n  if (item) {\n    updates.push({\n      json: {\n        sku,\n        new_stock: Number(item.stock || 0) + addQty\n      }\n    });\n  }\n}\n\nreturn updates;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        368
+      ],
+      "id": "738ea9f9-89ba-4304-963c-682ca44ceb81",
+      "name": "Code in JavaScript",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk",
+          "mode": "list",
+          "cachedResultName": "Dawaa Pharmacy Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1843831153,
+          "mode": "list",
+          "cachedResultName": "Catalog",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit#gid=1843831153"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "stock": "={{ $json.new_stock }}",
+            "sku": "={{ $json.sku }}"
+          },
+          "matchingColumns": [
+            "sku"
+          ],
+          "schema": [
+            {
+              "id": "sku",
+              "displayName": "sku",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "active_ingredient",
+              "displayName": "active_ingredient",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "strength",
+              "displayName": "strength",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "form",
+              "displayName": "form",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "price_egp",
+              "displayName": "price_egp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "stock",
+              "displayName": "stock",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reorder_level",
+              "displayName": "reorder_level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "controlled",
+              "displayName": "controlled",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        944,
+        368
+      ],
+      "id": "1ea7a474-ab36-4ae5-95b6-5c30b9b20281",
+      "name": "Update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pYsU4OaieiWxdjhG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 22 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -16,
+        528
+      ],
+      "id": "ba642451-726b-4443-a0c3-9c2d88432610",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk",
+          "mode": "list",
+          "cachedResultName": "Dawaa Pharmacy Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1843831153,
+          "mode": "list",
+          "cachedResultName": "Catalog",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit#gid=1843831153"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        528
+      ],
+      "id": "d3bf9418-fdc7-4277-ac7d-8cbc7d3732fe",
+      "name": "Read Stock",
+      "retryOnFail": true,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pYsU4OaieiWxdjhG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().map(i => i.json);\n\nconst lowStock = items.filter(item => {\n  const stock = Number(item.stock ?? 0);\n  const reorderLevel = Number(item.reorder_level ?? 0);\n  return !isNaN(stock) && !isNaN(reorderLevel) && stock <= reorderLevel;\n});\n\n// Stop the workflow if nothing needs reordering\nif (lowStock.length === 0) return [];\n\nconst lines = lowStock.map(i =>\n  `- ${i.name} (${i.sku}): ${i.stock} left (reorder at ${i.reorder_level})`\n);\n\nconst today = new Date().toISOString().slice(0, 10);\n\nreturn [{\n  json: {\n    date: today,\n    count: lowStock.length,\n    telegram_text: `📦 *Daily Reorder List (${today})*\\n\\n${lines.join('\\n')}`,\n    email_subject: `[Reorder Required] ${lowStock.length} Low Stock Items — ${today}`,\n    email_body: `The following ${lowStock.length} items are at or below their reorder level:\\n\\n${lines.join('\\n')}`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        528
+      ],
+      "id": "71eeee4c-72b4-4874-a0f2-4dfc058da720",
+      "name": "Find Low Stock"
+    },
+    {
+      "parameters": {
+        "chatId": "7714106732",
+        "text": "={{ $json.telegram_text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        752,
+        544
+      ],
+      "id": "a186c008-4218-4f64-b1bc-42e9dd79f21c",
+      "name": "Send a text message1",
+      "webhookId": "1d49f041-6a9d-48ee-9438-254d5715d894",
+      "credentials": {
+        "telegramApi": {
+          "id": "EBO3DSIo4SzsyTY1",
+          "name": "SOUS_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "mostafa100pwg@gmail.com",
+        "subject": "={{ $json.email_subject }}",
+        "message": "={{ $json.email_body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        752,
+        704
+      ],
+      "id": "a272cec2-f376-46ed-86cf-5c94e4ae953d",
+      "name": "Send a message1",
+      "webhookId": "61a7fc15-5190-4615-bfc6-9db3e89e59ae",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "8U6vcJdKIcCaAZOc",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Classify Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Error": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Reservations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expired lines": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Catalog": {
+      "main": [
+        [
+          {
+            "node": "Expired lines",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Reservations": {
+      "main": [
+        [
+          {
+            "node": "Read Catalog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Read Stock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Stock": {
+      "main": [
+        [
+          {
+            "node": "Find Low Stock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Low Stock": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Africa/Cairo",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "37e1bc43-b874-49e6-9da2-7e593851976e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "60cc8007be45046e43f1c581e26d315f4f6c01a209b4535c2581e0f902db5668"
+  },
+  "nodeGroups": [],
+  "id": "GR5xRMmMEcwjDPVZ",
+  "tags": []
+}

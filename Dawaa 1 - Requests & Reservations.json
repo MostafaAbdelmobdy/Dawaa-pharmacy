@@ -1,0 +1,1798 @@
+{
+  "name": "Dawaa 1 - Requests & Reservations",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        0
+      ],
+      "id": "8ec74289-31a1-408e-8c22-5e223577e31f",
+      "name": "WhatsApp Trigger",
+      "webhookId": "76aff4be-8d6b-4781-83f7-fc6974548251",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "f0dDQtUpljJemFk0",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Keep customer messages only. Text and photos (prescriptions) are both accepted.\nconst m = $json.messages?.[0]; if (!m) return [];\nreturn [{ json: { customer_id: m.from, customer_name: $json.contacts?.[0]?.profile?.name || '', wa_phone_id: $json.metadata.phone_number_id,\n  type: m.type, text: m.text?.body || m.image?.caption || '', media_id: m.image?.id || '' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        0
+      ],
+      "id": "4743b4d8-9d4b-4ebc-ade1-6652a4efb7ba",
+      "name": "Normalize Message"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { ...$json, prompt: 'A customer wrote to an Egyptian pharmacy. Return JSON only: {\"is_prescription\": false, \"readable\": true, \"medicines\": [{\"name\": \"\", \"strength\": \"\", \"qty\": 1}], \"other\": \"greeting|question|empty\"}. Only medicines the customer asks for. Message: <<<' + $json.text + '>>>' } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        176
+      ],
+      "id": "dc96b72b-60da-48eb-92af-6d1e634f1089",
+      "name": "Prepare Text Read"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "whatsAppApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        544,
+        -80
+      ],
+      "id": "b8a3b53e-6673-4b31-b384-a7266dedc276",
+      "name": "Download Photo",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "YCq8qSEwzHCRSANP",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "media",
+        "operation": "mediaUrlGet",
+        "mediaGetId": "={{ $json.media_id }}"
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        400,
+        -80
+      ],
+      "id": "79c81cd6-937c-46b1-ad98-2df0e23c3f91",
+      "name": "Get Photo URL",
+      "webhookId": "52df857e-fe15-40d4-b931-49e9d9bddef2",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "YCq8qSEwzHCRSANP",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ contents: [{ parts: [{ text: $json.prompt }].concat($json.b64 ? [{ inline_data: { mime_type: $json.mime, data: $json.b64 } }] : []) }], generationConfig: { responseMimeType: 'application/json', temperature: 0.1 } }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        880,
+        16
+      ],
+      "id": "efea36f8-1b77-4e12-a132-abb8ec02e02e",
+      "name": "AI Read Request",
+      "retryOnFail": true,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YItLqVamKs8UEdwZ",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const buf = await this.helpers.getBinaryDataBuffer(0, 'data');\nreturn [{ json: { ...$('Normalize Message').first().json, b64: buf.toString('base64'), mime: $input.first().binary.data.mimeType || 'image/jpeg',\n  prompt: 'This is a photo of an Egyptian prescription or medicine box. Return JSON only: {\"is_prescription\": true|false, \"readable\": true|false, \"medicines\": [{\"name\": \"\", \"strength\": \"\", \"qty\": 1}]}. qty = boxes requested, default 1. Never guess an unreadable name: put it as \"?\".' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        -80
+      ],
+      "id": "2afed3da-a1ae-42e3-883b-e8fcf2f0bcb5",
+      "name": "Prepare Prescription Read"
+    },
+    {
+      "parameters": {
+        "chatId": "7714106732",
+        "text": "={{ '⚠️ Could not read a request from ' + $('Normalize Message').first().json.customer_id + ': ' + ($('Normalize Message').first().json.text || '[photo]') + '. Please reply to the customer directly.' }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1088,
+        176
+      ],
+      "id": "e43f41f9-3ad2-4e2b-9480-578f164cb2d8",
+      "name": "AI Failed: Ask Pharmacist",
+      "webhookId": "fdf18b7a-99a9-420a-b50c-77fae46f4647",
+      "credentials": {
+        "telegramApi": {
+          "id": "EBO3DSIo4SzsyTY1",
+          "name": "SOUS_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1843831153,
+          "mode": "list",
+          "cachedResultName": "Catalog",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit#gid=1843831153"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1104,
+        0
+      ],
+      "id": "87a42626-a3a5-4a3f-9ef6-2e9452ad11ae",
+      "name": "Read Catalog",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pYsU4OaieiWxdjhG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let src; try { src = $('Prepare Prescription Read').first().json; } catch (e) { src = $('Prepare Text Read').first().json; }\nlet r = $('AI Read Request').first().json; const cat = $('Read Catalog').all().map(i => i.json);\nconst raw = r?.content?.[0]?.text || r?.choices?.[0]?.message?.content || r?.candidates?.[0]?.content?.parts?.[0]?.text;\nif (raw) { try { r = JSON.parse(raw.replace(/```json|```/g, '').trim()); } catch (e) { r = { readable: false, medicines: [] }; } }\nconst norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9\\u0600-\\u06FF]/g, ''), yes = v => ['yes', 'true', '1'].includes(String(v).trim().toLowerCase());\nconst lev = (a, b) => { const d = Array.from({ length: a.length + 1 }, (_, i) => Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)));\n  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); return d[a.length][b.length]; };\nconst lines = [], unclear = [];\nfor (const m of (r.medicines || []).slice(0, 10)) {\n  const n = norm(m.name); if (!n || n === '?') { unclear.push(m.name || '?'); continue; }\n  const best = cat.map(p => ({ p, d: Math.min(lev(n, norm(p.name)), lev(n, norm(p.active_ingredient))) })).sort((a, b) => a.d - b.d)[0];\n  if (!best || best.d > Math.max(2, n.length * 0.3)) { unclear.push(m.name); continue; }\n  const p = best.p; const qty = Math.max(1, Math.min(5, Math.round(Number(m.qty) || 1)));\n  const alts = cat.filter(x => x.active_ingredient === p.active_ingredient && x.sku !== p.sku && Number(x.stock) > 0);\n  lines.push({ sku: p.sku, name: p.name, qty, price_egp: Number(p.price_egp) || 0, in_stock: Number(p.stock) >= qty, controlled: yes(p.controlled), fuzzy: best.d > 0,\n    alt: alts[0] ? alts[0].name + ' ' + alts[0].strength + ' (' + alts[0].sku + ', ' + alts[0].price_egp + ' EGP)' : '' });\n}\nconst needsPharmacist = !!r.is_prescription || r.readable === false || unclear.length > 0 || lines.some(l => !l.in_stock || l.controlled || l.fuzzy);\nconst group = 'R-' + $now.setZone('Africa/Cairo').toFormat('yyMMdd') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();\nreturn [{ json: { ...src, b64: undefined, prompt: undefined, group, lines, unclear, readable: r.readable !== false, needsPharmacist, nothing: !lines.length && !unclear.length,\n  total: lines.filter(l => l.in_stock).reduce((s, l) => s + l.qty * l.price_egp, 0) } }];"
+      },
+      "name": "Match Catalog",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1296,
+        0
+      ],
+      "id": "77ef5e3a-fded-4f39-9554-7b1fc1ef6b75"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1384774488060812",
+        "recipientPhoneNumber": "={{ $('Match Catalog').item.json.customer_id }}",
+        "textBody": "عذراً، لم نتمكن من قراءة الروشتة بوضوح 😅💊 يرجى إرسال صورة أخرى واضحة للروشتة 📸، أو كتابة اسم الدواء بشكل صحيح (بالعربية أو الإنجليزية 🔤) لنتمكن من توفيره لك فوراً! ✨  ---  Sorry, we couldn't read the prescription clearly 😅💊 Please send another clear photo of the prescription 📸, or type the correct medicine name (in Arabic or English 🔤) so we can provide it for you right away! ✨",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        1744,
+        -112
+      ],
+      "id": "74bfb2aa-f4c9-4650-a64d-dd0a2f4d7a1b",
+      "name": "Nothing Found Reply",
+      "webhookId": "7aa370b9-d71c-4c84-886d-e33690c4c16e",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "YCq8qSEwzHCRSANP",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.nothing }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "equals"
+                    },
+                    "id": "12ec4081-0305-4d36-8c81-eb07fbec3712"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Nothing found"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b1513b62-e867-4f17-9a74-6a4842412f83",
+                    "leftValue": "={{ $json.needsPharmacist }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Pharmacist"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Auto reseved"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        -16
+      ],
+      "id": "09fdc416-0c08-49b2-92f9-160d86d68dcb",
+      "name": "Route Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json;\nconst status = j.needsPharmacist ? 'pending_pharmacist' : 'reserved';\nconst exp = $now.setZone('Africa/Cairo').plus({ hours: 24 })\n  .toFormat('yyyy-MM-dd HH:mm');\nconst base = { customer_id: j.customer_id, wa_phone_id: j.wa_phone_id, customer_name: j.customer_name };\nconst rows = (j.lines || []).map(l => ({ ...base, sku: l.sku, name: l.name, qty: l.qty, total_egp: l.qty * (l.price || l.price_egp || 0), status, expires_at: status === 'reserved' ? exp : '',\nnote: [l.controlled ? 'controlled' : '', l.in_stock ? '' : 'out of stock', l.alternative ? 'alt: ' + l.alternative : '', l.fuzzy ? 'fuzzy match' : ''].filter(Boolean).join('; ') }));\nfor (const u of (j.unclear || [])) rows.push({ ...base, sku: '', name: String(u), qty: 1, total_egp: 0, status: 'pending_pharmacist', expires_at: '', note: 'not in catalog or unreadable' });\nreturn rows.map((r, k) => ({ json: { res_id: j.group + '-' + (k + 1), ...r } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1728,
+        160
+      ],
+      "id": "1f0c0f57-af58-4f91-98e5-57241d4da0bd",
+      "name": "One Row per Medicine"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 762278481,
+          "mode": "list",
+          "cachedResultName": "Reservations",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit#gid=762278481"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "res_id": "={{ $json.res_id }}",
+            "customer_id": "={{ $json.customer_id }}",
+            "wa_phone_id": "={{ $json.wa_phone_id }}",
+            "customer_name": "={{ $json.customer_name }}",
+            "sku": "={{ $json.sku }}",
+            "name": "={{ $json.name }}",
+            "qty": "={{ $json.qty }}",
+            "total_egp": "={{ $json.total_egp }}",
+            "status": "={{ $json.status }}",
+            "expires_at": "={{ $json.expires_at }}",
+            "note": "={{ $json.note }}",
+            "created_at": "={{ $now.setZone('Africa/Cairo').toFormat('yyyy-MM-dd HH:mm') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "res_id",
+              "displayName": "res_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "wa_phone_id",
+              "displayName": "wa_phone_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sku",
+              "displayName": "sku",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "qty",
+              "displayName": "qty",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "total_egp",
+              "displayName": "total_egp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "expires_at",
+              "displayName": "expires_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pharmacist",
+              "displayName": "pharmacist",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "note",
+              "displayName": "note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1904,
+        160
+      ],
+      "id": "9f4ac18c-9541-46c7-8351-0f038310ed8c",
+      "name": "Save Reservation Lines",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pYsU4OaieiWxdjhG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Stock leaves the shelf only when a line is reserved, and never goes below zero.\nconst cat = Object.fromEntries($('Read Catalog').all().map(i => [i.json.sku, Number(i.json.stock)]));\nfor (const l of $('Match Catalog').first().json.lines) { cat[l.sku] -= l.qty; if (cat[l.sku] < 0) throw new Error('VALIDATION: stock for ' + l.sku + ' would go negative'); }\nreturn $('Match Catalog').first().json.lines.map(l => ({ json: { sku: l.sku, stock: cat[l.sku] } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        304
+      ],
+      "id": "1c44052f-ec39-44d8-9b67-bfe5e48a7ebf",
+      "name": "Take Stock Now"
+    },
+    {
+      "parameters": {
+        "chatId": "7714106732",
+        "text": "={{ $('Match Catalog').first().json.lines.map(l => l.qty + ' x ' + l.name + (l.fuzzy ? ' (fuzzy match)' : '') + (l.alternative ? '\\n  ↳ alternative: ' + l.alternative : '')).join('\\n') + ($('Match Catalog').first().json.unclear.length ? '\\n❓ unclear: ' + $('Match Catalog').first().json.unclear.join(', ') : '') }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "✅ Approve",
+                    "additionalFields": {
+                      "callback_data": "={{ 'ph:approve:' + $('Match Catalog').first().json.group + ':' + $('Match Catalog').first().json.customer_id }}"
+                    }
+                  },
+                  {
+                    "text": "❌ Reject",
+                    "additionalFields": {
+                      "callback_data": "={{ 'ph:reject:' + $('Match Catalog').first().json.group + ':' + $('Match Catalog').first().json.customer_id }}"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2288,
+        48
+      ],
+      "id": "dea5d6be-741d-465c-b152-394aaab8e88c",
+      "name": "Take Stock Now1",
+      "webhookId": "5dcfe6e2-c4ed-4335-96f7-87679ec2e164",
+      "credentials": {
+        "telegramApi": {
+          "id": "EBO3DSIo4SzsyTY1",
+          "name": "SOUS_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1384774488060812",
+        "recipientPhoneNumber": "={{ $('Match Catalog').item.json.customer_id }}",
+        "textBody": "👨‍⚕️ الصيدلي يراجع طلبك وهياكدك حالاً / Pharmacist is reviewing your request and will confirm shortly.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        2464,
+        48
+      ],
+      "id": "b74099d3-c1e8-486b-98d9-394b9136f623",
+      "name": "Tell Customer: Pharmacist Checking",
+      "webhookId": "87db17b1-a87e-4e41-a56d-348b3c09ec1b",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "YCq8qSEwzHCRSANP",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1843831153,
+          "mode": "list",
+          "cachedResultName": "Catalog",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit#gid=1843831153"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "sku": "={{ $json.sku }}",
+            "stock": "={{ $json.stock }}"
+          },
+          "matchingColumns": [
+            "sku"
+          ],
+          "schema": [
+            {
+              "id": "sku",
+              "displayName": "sku",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "active_ingredient",
+              "displayName": "active_ingredient",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "strength",
+              "displayName": "strength",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "form",
+              "displayName": "form",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "price_egp",
+              "displayName": "price_egp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "stock",
+              "displayName": "stock",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reorder_level",
+              "displayName": "reorder_level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "controlled",
+              "displayName": "controlled",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2464,
+        304
+      ],
+      "id": "129f16e6-98bc-4bd9-832f-7a900982b088",
+      "name": "Update Stock",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pYsU4OaieiWxdjhG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1384774488060812",
+        "recipientPhoneNumber": "={{ $('Match Catalog').item.json.customer_id }}",
+        "textBody": "={{ 'Reserved for 2 hours (' + $('Match Catalog').first().json.group + '):\\n' + $('Match Catalog').first().json.lines.map(l => l.qty + ' x ' + l.name + ' = ' + (l.qty * l.price) + ' EGP').join('\\n') + '\\nTotal ' + $('Match Catalog').first().json.total + ' EGP. Pick up from the pharmacy. / محجوز لمدة ساعتين.' }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        2640,
+        304
+      ],
+      "id": "32dbeab4-0353-4fc3-ab59-b345f3ed02b1",
+      "name": "Confirm Reservation",
+      "webhookId": "e6023083-6dc6-4039-9874-0b1bc44a7ac8",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "YCq8qSEwzHCRSANP",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1684c683-2508-4683-b551-6fabafc45dec",
+              "leftValue": "={{ $('Match Catalog').item.json.needsPharmacist }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2048,
+        160
+      ],
+      "id": "1b7d2223-1baa-4037-9a15-1f10e9b15415",
+      "name": "Auto or Pharmacist?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3f83d10d-e5e1-4a0e-838d-8702607de6fa",
+              "leftValue": "={{ $json.media_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "0df69fe0-61d7-48b6-8dbc-ac6a637f7835",
+      "name": "Text or Image"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "callback_query"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -272,
+        560
+      ],
+      "id": "639c6563-92cd-46bc-982e-92af07085c6d",
+      "name": "Telegram Trigger",
+      "webhookId": "90bfe1ba-c831-4c69-84bc-0cd267d60401",
+      "credentials": {
+        "telegramApi": {
+          "id": "EBO3DSIo4SzsyTY1",
+          "name": "SOUS_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const q = $json.callback_query;\nconst [action, group, customer] = String(q.data || '').split('_');\n\nconst result = {\n  action,\n  query_id: q.id,\n  chat_id: q.message.chat.id,\n  message_id: q.message.message_id,\n  original: q.message.text,\n  by: q.from.username || q.from.first_name\n};\n\nif (group) result.group = group;\nif (customer) result.customer = customer;\n\nreturn [{ json: result }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        560
+      ],
+      "id": "e9a63d8e-039f-4f12-aa39-a43cf6e5a211",
+      "name": "Parse Decision"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk",
+          "mode": "list",
+          "cachedResultName": "Dawaa Pharmacy Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 762278481,
+          "mode": "list",
+          "cachedResultName": "Reservations",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit#gid=762278481"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "pending_pharmacist"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        176,
+        560
+      ],
+      "id": "5c7036e7-7bcc-4672-b5b3-00eeecef1e85",
+      "name": "Find Pending Lines",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pYsU4OaieiWxdjhG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk",
+          "mode": "list",
+          "cachedResultName": "Dawaa Pharmacy Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1843831153,
+          "mode": "list",
+          "cachedResultName": "Catalog",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit#gid=1843831153"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        400,
+        560
+      ],
+      "id": "c6619aac-f7c0-4f4d-a50d-4cfc7cc35e65",
+      "name": "Read Catalog1",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pYsU4OaieiWxdjhG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const decision = $('Parse Decision').first().json;\nconst pending = $('Find Pending Lines').all().map(i => i.json);\nconst catalog = $input.all().map(i => i.json);\n\n// Match by group/res_id if provided, otherwise take all pending_pharmacist lines\nconst matched = decision.group\n  ? pending.filter(r => String(r.res_id || '').includes(decision.group))\n  : pending;\n\nif (matched.length === 0) return [];\n\nconst isApproved = String(decision.action || '').toLowerCase() === 'approve';\nconst newStatus = isApproved ? 'reserved' : 'rejected';\n\n// Build reservation updates\nconst lineUpdates = matched.map(r => ({\n  res_id: r.res_id,\n  status: newStatus,\n  pharmacist: decision.by,\n  customer_id: r.customer_id,\n  customer_name: r.customer_name,\n  sku: r.sku,\n  name: r.name,\n  qty: Number(r.qty || 1)\n}));\n\n// Build catalog stock deductions (only if approved)\nconst stockUpdates = [];\nif (isApproved) {\n  const bySku = {};\n  for (const r of lineUpdates) {\n    bySku[r.sku] = (bySku[r.sku] || 0) + r.qty;\n  }\n  for (const [sku, deduct] of Object.entries(bySku)) {\n    const item = catalog.find(c => c.sku === sku);\n    if (item) {\n      stockUpdates.push({\n        sku,\n        new_stock: Math.max(0, Number(item.stock || 0) - deduct)\n      });\n    }\n  }\n}\n\nreturn [{\n  json: {\n    ...decision,\n    is_approved: isApproved,\n    new_status: newStatus,\n    line_updates: lineUpdates,\n    stock_updates: stockUpdates,\n    customer_id: lineUpdates[0].customer_id,\n    customer_name: lineUpdates[0].customer_name,\n    items_summary: lineUpdates.map(l => `${l.qty}x ${l.name}`).join(', ')\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        560
+      ],
+      "id": "137a74fe-b694-4e01-a806-35b046f76e7d",
+      "name": "Apply Decision"
+    },
+    {
+      "parameters": {
+        "resource": "callback",
+        "queryId": "={{ $json.query_id }}",
+        "additionalFields": {
+          "show_alert": true,
+          "text": "={{ $('Apply Decision').first().json.is_approved ? '✅ Approved' : '❌ Rejected' }}"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        848,
+        560
+      ],
+      "id": "93ce3ab1-1233-4239-925e-3c2f071d7cef",
+      "name": "Answer Query a callback",
+      "webhookId": "ca914c47-1ccd-4c36-9b15-03d36d4e34f2",
+      "credentials": {
+        "telegramApi": {
+          "id": "EBO3DSIo4SzsyTY1",
+          "name": "SOUS_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "editMessageText",
+        "chatId": "={{ $('Apply Decision').item.json.chat_id }}",
+        "messageId": "={{ $('Apply Decision').item.json.message_id }}",
+        "text": "={{ $('Apply Decision').first().json.original }}  {{ $('Apply Decision').first().json.is_approved ? '✅ Approved' : '❌ Rejected' }} by {{ $('Apply Decision').first().json.by }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1024,
+        752
+      ],
+      "id": "b969e9aa-c6cc-43e4-9f72-9b3587ebef52",
+      "name": "Mark Message Done",
+      "webhookId": "4e268ad8-f748-4671-9242-9d3485dff587",
+      "credentials": {
+        "telegramApi": {
+          "id": "EBO3DSIo4SzsyTY1",
+          "name": "SOUS_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Apply Decision').first().json;\nreturn data.line_updates.map(line => ({\n  json: {\n    ...line,\n    is_approved: data.is_approved,\n    items_summary: data.items_summary\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1136,
+        560
+      ],
+      "id": "e105d0c3-806f-4978-b04c-a711558c87cc",
+      "name": "Line Updates"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk",
+          "mode": "list",
+          "cachedResultName": "Dawaa Pharmacy Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 762278481,
+          "mode": "list",
+          "cachedResultName": "Reservations",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit#gid=762278481"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "res_id": "={{ $json.res_id }}",
+            "status": "={{ $json.status }}",
+            "pharmacist": "={{ $json.pharmacist }}"
+          },
+          "matchingColumns": [
+            "res_id"
+          ],
+          "schema": [
+            {
+              "id": "res_id",
+              "displayName": "res_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "wa_phone_id",
+              "displayName": "wa_phone_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "sku",
+              "displayName": "sku",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "qty",
+              "displayName": "qty",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "total_egp",
+              "displayName": "total_egp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "expires_at",
+              "displayName": "expires_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "pharmacist",
+              "displayName": "pharmacist",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "note",
+              "displayName": "note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1360,
+        560
+      ],
+      "id": "370366b9-f608-4baa-9e20-80ee38df891f",
+      "name": "Update Lines",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pYsU4OaieiWxdjhG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "0347e786-5ea8-492f-88a2-7e21c199232c",
+              "leftValue": "={{ $('Line Updates').item.json.is_approved }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1584,
+        560
+      ],
+      "id": "d92c741a-d48a-45ee-99c9-32af33498df7",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Apply Decision').first().json;\nreturn data.stock_updates.map(s => ({\n  json: {\n    ...s,\n    customer_id: data.customer_id,\n    customer_name: data.customer_name,\n    items_summary: data.items_summary\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        496
+      ],
+      "id": "76501202-9256-4986-991f-5b84bab92e6c",
+      "name": "Stock Rows"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk",
+          "mode": "list",
+          "cachedResultName": "Dawaa Pharmacy Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1843831153,
+          "mode": "list",
+          "cachedResultName": "Catalog",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s333BD81RMimaxmAFU345o5mOGhBENIiLM6z1cdjDVk/edit#gid=1843831153"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "sku": "={{ $json.sku }}",
+            "stock": "={{ $json.new_stock }}"
+          },
+          "matchingColumns": [
+            "sku"
+          ],
+          "schema": [
+            {
+              "id": "sku",
+              "displayName": "sku",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "active_ingredient",
+              "displayName": "active_ingredient",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "strength",
+              "displayName": "strength",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "form",
+              "displayName": "form",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "price_egp",
+              "displayName": "price_egp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "stock",
+              "displayName": "stock",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reorder_level",
+              "displayName": "reorder_level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "controlled",
+              "displayName": "controlled",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2048,
+        496
+      ],
+      "id": "5c63bbef-de03-4dd0-b1b1-48cfeb9d5b05",
+      "name": "Take Stock (Approved)",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pYsU4OaieiWxdjhG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1384774488060812",
+        "recipientPhoneNumber": "={{ String($('Apply Decision').first().json.customer_id) }}",
+        "textBody": "=Hi {{ $('Apply Decision').first().json.customer_name }}, your order ({{ $('Apply Decision').first().json.items_summary }}) has been approved by our pharmacist and is ready for pickup.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        2272,
+        496
+      ],
+      "id": "b266b7bc-c43b-43d7-9849-e361103a944c",
+      "name": "Tell Customer: Approved",
+      "webhookId": "6e264906-5ec9-4bae-ac6b-9deecf7666e3",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "YCq8qSEwzHCRSANP",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1384774488060812",
+        "recipientPhoneNumber": "={{ String($('Apply Decision').first().json.customer_id) }}",
+        "textBody": "=Hi {{ $('Apply Decision').first().json.customer_name }}, unfortunately your order ({{ $('Apply Decision').first().json.items_summary }}) could not be approved by our pharmacist. Please contact the pharmacy for assistance.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        1968,
+        768
+      ],
+      "id": "4b8bb37c-39a0-4e51-b3a3-e93c23aa7fe5",
+      "name": "(Rejected)Send message",
+      "webhookId": "f70dc48c-09ed-48e9-9137-feb6c62a94ce",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "YCq8qSEwzHCRSANP",
+          "name": "WhatsApp account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Message": {
+      "main": [
+        [
+          {
+            "node": "Text or Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Text Read": {
+      "main": [
+        [
+          {
+            "node": "AI Read Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Photo URL": {
+      "main": [
+        [
+          {
+            "node": "Download Photo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Photo": {
+      "main": [
+        [
+          {
+            "node": "Prepare Prescription Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Prescription Read": {
+      "main": [
+        [
+          {
+            "node": "AI Read Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Read Request": {
+      "main": [
+        [
+          {
+            "node": "Read Catalog",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Failed: Ask Pharmacist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match Catalog": {
+      "main": [
+        [
+          {
+            "node": "Route Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Catalog": {
+      "main": [
+        [
+          {
+            "node": "Match Catalog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Request": {
+      "main": [
+        [
+          {
+            "node": "Nothing Found Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "One Row per Medicine",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "One Row per Medicine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One Row per Medicine": {
+      "main": [
+        [
+          {
+            "node": "Save Reservation Lines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Reservation Lines": {
+      "main": [
+        [
+          {
+            "node": "Auto or Pharmacist?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Take Stock Now1": {
+      "main": [
+        [
+          {
+            "node": "Tell Customer: Pharmacist Checking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Take Stock Now": {
+      "main": [
+        [
+          {
+            "node": "Update Stock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Stock": {
+      "main": [
+        [
+          {
+            "node": "Confirm Reservation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auto or Pharmacist?": {
+      "main": [
+        [
+          {
+            "node": "Take Stock Now1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Take Stock Now",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text or Image": {
+      "main": [
+        [
+          {
+            "node": "Get Photo URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Text Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Decision": {
+      "main": [
+        [
+          {
+            "node": "Find Pending Lines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Pending Lines": {
+      "main": [
+        [
+          {
+            "node": "Read Catalog1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Catalog1": {
+      "main": [
+        [
+          {
+            "node": "Apply Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply Decision": {
+      "main": [
+        [
+          {
+            "node": "Answer Query a callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer Query a callback": {
+      "main": [
+        [
+          {
+            "node": "Mark Message Done",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Line Updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Line Updates": {
+      "main": [
+        [
+          {
+            "node": "Update Lines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lines": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Stock Rows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "(Rejected)Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stock Rows": {
+      "main": [
+        [
+          {
+            "node": "Take Stock (Approved)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Take Stock (Approved)": {
+      "main": [
+        [
+          {
+            "node": "Tell Customer: Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "GR5xRMmMEcwjDPVZ",
+    "timezone": "Africa/Cairo",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": -1,
+    "availableInMCP": false,
+    "redactCallerExecutions": true
+  },
+  "versionId": "ea5b8bb7-5d01-47c8-a9f7-74d6ea377cf7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "60cc8007be45046e43f1c581e26d315f4f6c01a209b4535c2581e0f902db5668"
+  },
+  "nodeGroups": [],
+  "id": "oUuG4YJiX7iVqYBS",
+  "tags": []
+}
