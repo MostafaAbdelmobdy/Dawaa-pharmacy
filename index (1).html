@@ -1,0 +1,2761 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dawaa Pharmacy (دواء) — AI Automation &amp; Live Operations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-base: #050b14;
+      --bg-elevated: #0a1424;
+      --bg-glass: rgba(13, 25, 44, 0.72);
+      --bg-glass-strong: rgba(10, 20, 36, 0.9);
+      --bg-input: rgba(15, 30, 54, 0.85);
+      --border-subtle: rgba(148, 163, 184, 0.14);
+      --border-glow: rgba(6, 182, 212, 0.35);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --cyan: #06b6d4;
+      --cyan-light: #22d3ee;
+      --teal: #14b8a6;
+      --indigo: #6366f1;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --wa-bg: #07141b;
+      --wa-header: #0d222e;
+      --wa-in: #112a38;
+      --wa-out: #0d4a47;
+      --tg-bg: #0b1628;
+      --tg-header: linear-gradient(135deg, #0284c7, #2563eb);
+      --tg-card: #12223b;
+      --log-bg: #050b16;
+      --shadow-card: 0 20px 50px rgba(0, 0, 0, 0.45);
+      --grid-color: rgba(56, 189, 248, 0.045);
+    }
+
+    [data-theme="light"] {
+      --bg-base: #f0f6fb;
+      --bg-elevated: #ffffff;
+      --bg-glass: rgba(255, 255, 255, 0.82);
+      --bg-glass-strong: rgba(255, 255, 255, 0.95);
+      --bg-input: #f1f5f9;
+      --border-subtle: rgba(15, 23, 42, 0.1);
+      --border-glow: rgba(8, 145, 178, 0.35);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --cyan: #0891b2;
+      --cyan-light: #06b6d4;
+      --teal: #0d9488;
+      --indigo: #4f46e5;
+      --emerald: #059669;
+      --amber: #d97706;
+      --rose: #e11d48;
+      --wa-bg: #e8f3f1;
+      --wa-header: #0f766e;
+      --wa-in: #ffffff;
+      --wa-out: #ccf2ec;
+      --tg-bg: #edf4fc;
+      --tg-header: linear-gradient(135deg, #0284c7, #4f46e5);
+      --tg-card: #ffffff;
+      --log-bg: #0c1424;
+      --shadow-card: 0 18px 40px rgba(15, 23, 42, 0.09);
+      --grid-color: rgba(8, 145, 178, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      min-height: 100%;
+      font-family: 'Plus Jakarta Sans', 'Cairo', system-ui, -apple-system, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      transition: background 0.35s ease, color 0.35s ease;
+    }
+
+    .arabic {
+      font-family: 'Cairo', 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+    }
+
+    /* Ambient Clinical Aurora Background */
+    .aurora-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .aurora-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: radial-gradient(circle at 50% 30%, black 35%, transparent 85%);
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(95px);
+      opacity: 0.22;
+      animation: floatAurora 16s ease-in-out infinite alternate;
+    }
+
+    [data-theme="light"] .orb {
+      opacity: 0.16;
+    }
+
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle, var(--cyan), transparent 70%);
+      top: -160px;
+      left: -120px;
+    }
+
+    .orb-2 {
+      width: 480px;
+      height: 480px;
+      background: radial-gradient(circle, var(--indigo), transparent 70%);
+      bottom: -140px;
+      right: -100px;
+      animation-delay: -5s;
+    }
+
+    .orb-3 {
+      width: 380px;
+      height: 380px;
+      background: radial-gradient(circle, var(--teal), transparent 70%);
+      top: 40%;
+      left: 45%;
+      animation-delay: -10s;
+    }
+
+    @keyframes floatAurora {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(35px, -25px) scale(1.08); }
+      100% { transform: translate(-25px, 30px) scale(0.96); }
+    }
+
+    /* App Shell */
+    .app-shell {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Navbar */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 24px;
+      background: var(--bg-glass-strong);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .brand-logo {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--cyan), var(--indigo));
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 24px rgba(6, 182, 212, 0.35);
+      flex-shrink: 0;
+    }
+
+    .brand-logo svg {
+      width: 22px;
+      height: 22px;
+      color: #fff;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      font-size: 1.12rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-title .ar {
+      font-family: 'Cairo', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--cyan-light), var(--teal));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-input);
+      padding: 5px;
+      border-radius: 14px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .nav-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.22s ease;
+    }
+
+    .nav-btn:hover {
+      color: var(--text-primary);
+      background: rgba(148, 163, 184, 0.08);
+    }
+
+    .nav-btn.active {
+      color: #fff;
+      background: linear-gradient(135deg, var(--cyan), var(--indigo));
+      box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
+    }
+
+    .nav-badge {
+      font-size: 0.7rem;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(244, 63, 94, 0.2);
+      color: #fb7185;
+      font-weight: 700;
+    }
+
+    .nav-btn.active .nav-badge {
+      background: rgba(255, 255, 255, 0.24);
+      color: #fff;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--emerald);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--emerald);
+      position: relative;
+    }
+
+    .pulse-dot::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid var(--emerald);
+      animation: pulseRing 1.8s ease-out infinite;
+    }
+
+    @keyframes pulseRing {
+      0% { transform: scale(0.7); opacity: 0.9; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn:hover {
+      border-color: var(--border-glow);
+      transform: translateY(-1px);
+    }
+
+    /* Main Views */
+    .main-container {
+      flex: 1;
+      width: 100%;
+      max-width: 1520px;
+      margin: 0 auto;
+      padding: 20px 24px 36px;
+    }
+
+    .tab-view {
+      display: none;
+      animation: fadeSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .tab-view.active {
+      display: block;
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Glass Card */
+    .glass-card {
+      background: var(--bg-glass);
+      backdrop-filter: blur(18px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      box-shadow: var(--shadow-card);
+      transition: border-color 0.25s ease, transform 0.25s ease;
+    }
+
+    .glass-card:hover {
+      border-color: var(--border-glow);
+    }
+
+    /* ================= HOME TAB ================= */
+    .hero-card {
+      position: relative;
+      overflow: hidden;
+      padding: 40px 36px;
+      margin-bottom: 24px;
+      display: grid;
+      grid-template-columns: 1.35fr 0.85fr;
+      gap: 28px;
+      align-items: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--cyan-light);
+      background: rgba(6, 182, 212, 0.12);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      margin-bottom: 16px;
+    }
+
+    .hero-title {
+      font-size: clamp(1.9rem, 3.2vw, 2.85rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 14px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(120deg, var(--cyan-light), var(--teal), var(--indigo));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-desc {
+      color: var(--text-secondary);
+      font-size: 0.98rem;
+      line-height: 1.65;
+      max-width: 640px;
+      margin-bottom: 24px;
+    }
+
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .btn-primary {
+      border: none;
+      padding: 12px 22px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--cyan), var(--indigo));
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 28px rgba(6, 182, 212, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 34px rgba(6, 182, 212, 0.42);
+    }
+
+    .btn-secondary {
+      border: 1px solid var(--border-subtle);
+      padding: 12px 20px;
+      border-radius: 12px;
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--border-glow);
+      transform: translateY(-2px);
+    }
+
+    .ecg-panel {
+      background: rgba(5, 11, 22, 0.7);
+      border: 1px solid rgba(6, 182, 212, 0.25);
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    [data-theme="light"] .ecg-panel {
+      background: #0b1628;
+      color: #f1f5f9;
+    }
+
+    .ecg-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      color: #94a3b8;
+    }
+
+    .ecg-svg {
+      width: 100%;
+      height: 76px;
+    }
+
+    .ecg-path {
+      fill: none;
+      stroke: #22d3ee;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 620;
+      stroke-dashoffset: 620;
+      animation: drawEcg 3.2s linear infinite;
+      filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.7));
+    }
+
+    @keyframes drawEcg {
+      0% { stroke-dashoffset: 620; }
+      75% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: -620; }
+    }
+
+    .ecg-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      text-align: center;
+    }
+
+    .ecg-stat-box {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 10px;
+      padding: 10px 6px;
+    }
+
+    .ecg-stat-val {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #22d3ee;
+    }
+
+    .ecg-stat-lbl {
+      font-size: 0.68rem;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    /* Telemetry KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .kpi-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-secondary);
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .kpi-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+    }
+
+    .kpi-val {
+      font-size: 1.85rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .kpi-foot {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    /* Bento Grid */
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .bento-card {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .bento-span-2 { grid-column: span 2; }
+    .bento-span-3 { grid-column: span 3; }
+
+    .bento-tag {
+      align-self: flex-start;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(6, 182, 212, 0.12);
+      color: var(--cyan-light);
+      border: 1px solid rgba(6, 182, 212, 0.25);
+    }
+
+    .bento-card h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .bento-card p {
+      font-size: 0.86rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    .footer-bar {
+      padding: 18px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 16px;
+    }
+
+    .footer-links a {
+      color: var(--cyan-light);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+
+    /* ================= LIVE COUNTER TAB ================= */
+    .counter-grid {
+      display: grid;
+      grid-template-columns: 380px 1fr 350px;
+      gap: 18px;
+      align-items: stretch;
+      min-height: calc(100vh - 115px);
+    }
+
+    /* Col 1: WhatsApp Phone Mockup */
+    .phone-frame {
+      border-radius: 30px;
+      padding: 8px;
+      background: linear-gradient(145deg, rgba(34, 211, 238, 0.45), rgba(99, 102, 241, 0.35), rgba(20, 184, 166, 0.4));
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 110px);
+    }
+
+    .phone-screen {
+      flex: 1;
+      border-radius: 23px;
+      background: var(--wa-bg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .wa-header {
+      background: var(--wa-header);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #fff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .wa-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #22d3ee, #14b8a6);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: #052e2b;
+      box-shadow: 0 0 14px rgba(34, 211, 238, 0.45);
+      flex-shrink: 0;
+    }
+
+    .wa-meta h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .wa-meta span {
+      font-size: 0.74rem;
+      opacity: 0.8;
+    }
+
+    .wa-messages {
+      flex: 1;
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background-image: radial-gradient(rgba(34, 211, 238, 0.06) 1px, transparent 1px);
+      background-size: 18px 18px;
+    }
+
+    .wa-bubble {
+      max-width: 88%;
+      padding: 10px 13px;
+      border-radius: 14px;
+      font-size: 0.83rem;
+      line-height: 1.5;
+      position: relative;
+      animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      word-wrap: break-word;
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: translateY(8px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .wa-bubble.bot {
+      align-self: flex-start;
+      background: var(--wa-in);
+      color: var(--text-primary);
+      border-top-left-radius: 4px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .wa-bubble.user {
+      align-self: flex-end;
+      background: var(--wa-out);
+      color: var(--text-primary);
+      border-top-right-radius: 4px;
+      border: 1px solid rgba(20, 184, 166, 0.3);
+    }
+
+    .wa-time {
+      display: block;
+      text-align: right;
+      font-size: 0.66rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .rx-preview {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      border: 1px solid rgba(34, 211, 238, 0.35);
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 6px;
+      color: #e2e8f0;
+      font-size: 0.75rem;
+    }
+
+    .rx-preview-title {
+      color: #22d3ee;
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .typing-dots {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px 2px;
+    }
+
+    .typing-dots span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--cyan-light);
+      animation: bounceDot 1.2s infinite ease-in-out;
+    }
+
+    .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes bounceDot {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+      40% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    .wa-chips {
+      display: flex;
+      gap: 6px;
+      padding: 8px 10px;
+      overflow-x: auto;
+      background: rgba(0, 0, 0, 0.16);
+      border-top: 1px solid var(--border-subtle);
+      scrollbar-width: thin;
+    }
+
+    .chip-btn {
+      flex-shrink: 0;
+      border: 1px solid rgba(34, 211, 238, 0.28);
+      background: rgba(6, 182, 212, 0.1);
+      color: var(--text-primary);
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .chip-btn:hover {
+      background: rgba(6, 182, 212, 0.24);
+      transform: translateY(-1px);
+    }
+
+    .wa-input-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px;
+      background: var(--bg-elevated);
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .wa-input {
+      flex: 1;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-family: inherit;
+      font-size: 0.84rem;
+      outline: none;
+    }
+
+    .wa-input:focus {
+      border-color: var(--cyan);
+    }
+
+    .wa-send-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, var(--teal), var(--cyan));
+      color: #fff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+    }
+
+    .wa-send-btn:hover {
+      transform: scale(1.07);
+    }
+
+    /* Col 2: Execution Log */
+    .log-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      max-height: calc(100vh - 110px);
+    }
+
+    .panel-header {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .panel-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-title-wrap h2 {
+      font-size: 0.96rem;
+      font-weight: 700;
+    }
+
+    .exec-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      text-transform: lowercase;
+    }
+
+    .exec-idle { background: rgba(148, 163, 184, 0.14); color: var(--text-secondary); }
+    .exec-running { background: rgba(6, 182, 212, 0.18); color: var(--cyan-light); }
+    .exec-succeeded { background: rgba(16, 185, 129, 0.16); color: var(--emerald); }
+    .exec-waiting { background: rgba(245, 158, 11, 0.18); color: var(--amber); }
+
+    .log-body {
+      flex: 1;
+      background: var(--log-bg);
+      color: #e2e8f0;
+      padding: 16px 18px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      line-height: 1.65;
+    }
+
+    .log-empty {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #64748b;
+      gap: 10px;
+      padding: 24px;
+    }
+
+    .log-section-divider {
+      margin: 14px 0 10px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      background: rgba(99, 102, 241, 0.15);
+      border-left: 3px solid #818cf8;
+      color: #c7d2fe;
+      font-size: 0.74rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .log-line {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 5px 0;
+      animation: logSlide 0.25s ease-out;
+    }
+
+    @keyframes logSlide {
+      from { opacity: 0; transform: translateX(-8px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .log-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 7px;
+      flex-shrink: 0;
+    }
+
+    .dot-emerald { background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.7); }
+    .dot-cyan { background: #22d3ee; box-shadow: 0 0 8px rgba(34, 211, 238, 0.7); }
+    .dot-amber { background: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.7); }
+    .dot-rose { background: #f43f5e; box-shadow: 0 0 8px rgba(244, 63, 94, 0.7); }
+
+    .log-node {
+      color: #fbbf24;
+      font-weight: 600;
+    }
+
+    .log-detail {
+      color: #94a3b8;
+    }
+
+    .log-json {
+      display: block;
+      margin-top: 5px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(30, 58, 138, 0.35);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      color: #7dd3fc;
+      font-size: 0.74rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Col 3: Telegram Pharmacists Group */
+    .tg-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      max-height: calc(100vh - 110px);
+    }
+
+    .tg-header {
+      background: var(--tg-header);
+      padding: 14px 16px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .tg-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 0.92rem;
+    }
+
+    .tg-body {
+      flex: 1;
+      background: var(--tg-bg);
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .tg-card {
+      background: var(--tg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      animation: popIn 0.28s ease-out;
+    }
+
+    .tg-bot-name {
+      color: #38bdf8;
+      font-weight: 700;
+      font-size: 0.78rem;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .tg-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .tg-btn {
+      border: none;
+      padding: 8px 10px;
+      border-radius: 9px;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tg-btn-approve {
+      background: rgba(16, 185, 129, 0.18);
+      color: var(--emerald);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+
+    .tg-btn-approve:hover {
+      background: var(--emerald);
+      color: #fff;
+    }
+
+    .tg-btn-reject {
+      background: rgba(244, 63, 94, 0.16);
+      color: var(--rose);
+      border: 1px solid rgba(244, 63, 94, 0.35);
+    }
+
+    .tg-btn-reject:hover {
+      background: var(--rose);
+      color: #fff;
+    }
+
+    .tg-decided {
+      margin-top: 8px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    .tg-decided.approved {
+      background: rgba(16, 185, 129, 0.14);
+      color: var(--emerald);
+    }
+
+    .tg-decided.rejected {
+      background: rgba(244, 63, 94, 0.14);
+      color: var(--rose);
+    }
+
+    /* ================= BACK OFFICE TAB ================= */
+    .ops-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px 20px;
+      margin-bottom: 18px;
+    }
+
+    .ops-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .ops-btn {
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      padding: 9px 14px;
+      border-radius: 11px;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.2s ease;
+    }
+
+    .ops-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--cyan);
+      box-shadow: 0 8px 20px rgba(6, 182, 212, 0.18);
+    }
+
+    .ops-btn.warn:hover { border-color: var(--amber); }
+    .ops-btn.danger:hover { border-color: var(--rose); }
+
+    .subtabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .subtab-group {
+      display: flex;
+      gap: 6px;
+      background: var(--bg-input);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .subtab-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      padding: 7px 14px;
+      border-radius: 9px;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .subtab-btn.active {
+      background: var(--cyan);
+      color: #031522;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .search-input, .select-input {
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.82rem;
+      outline: none;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      padding: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 12px 14px;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-subtle);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr.flash-row {
+      animation: rowFlash 1.5s ease-out;
+    }
+
+    @keyframes rowFlash {
+      0% { background: rgba(6, 182, 212, 0.32); }
+      100% { background: transparent; }
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .pill-green { background: rgba(16, 185, 129, 0.15); color: var(--emerald); }
+    .pill-amber { background: rgba(245, 158, 11, 0.16); color: var(--amber); }
+    .pill-rose { background: rgba(244, 63, 94, 0.16); color: var(--rose); }
+    .pill-cyan { background: rgba(6, 182, 212, 0.15); color: var(--cyan-light); }
+    .pill-slate { background: rgba(148, 163, 184, 0.16); color: var(--text-secondary); }
+
+    .stock-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 120px;
+    }
+
+    .stock-bar {
+      flex: 1;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.18);
+      overflow: hidden;
+    }
+
+    .stock-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+
+    .qty-mini-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .qty-mini-btn:hover {
+      border-color: var(--cyan);
+    }
+
+    /* ================= WORKFLOWS TAB ================= */
+    .wf-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      margin-bottom: 18px;
+    }
+
+    .wf-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .wf-canvas-card {
+      padding: 18px;
+      overflow-x: auto;
+      position: relative;
+    }
+
+    .wf-lane-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--cyan-light);
+      margin: 8px 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .wf-svg {
+      width: 100%;
+      min-width: 900px;
+      height: auto;
+      display: block;
+    }
+
+    .wf-edge {
+      fill: none;
+      stroke: rgba(148, 163, 184, 0.32);
+      stroke-width: 2;
+    }
+
+    .wf-edge-glow {
+      fill: none;
+      stroke: var(--cyan-light);
+      stroke-width: 2.2;
+      stroke-dasharray: 8 18;
+      animation: flowPacket 1.6s linear infinite;
+    }
+
+    @keyframes flowPacket {
+      to { stroke-dashoffset: -26; }
+    }
+
+    .wf-node-g {
+      cursor: pointer;
+      transition: transform 0.18s ease;
+    }
+
+    .wf-node-rect {
+      fill: #0f1d33;
+      stroke: rgba(148, 163, 184, 0.35);
+      stroke-width: 1.5;
+      rx: 12;
+      transition: all 0.2s ease;
+    }
+
+    [data-theme="light"] .wf-node-rect {
+      fill: #ffffff;
+      stroke: rgba(15, 23, 42, 0.18);
+    }
+
+    .wf-node-g:hover .wf-node-rect,
+    .wf-node-g.selected .wf-node-rect {
+      stroke: #22d3ee;
+      stroke-width: 2.3;
+      filter: drop-shadow(0 0 10px rgba(34, 211, 238, 0.45));
+    }
+
+    .wf-node-label {
+      fill: var(--text-primary);
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .wf-node-sub {
+      fill: var(--text-muted);
+      font-size: 9.5px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .inspector-card {
+      padding: 20px;
+      position: sticky;
+      top: 84px;
+    }
+
+    .inspector-code {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      background: #060d19;
+      color: #7dd3fc;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.74rem;
+      line-height: 1.55;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    /* Modal & Toast */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.7);
+      backdrop-filter: blur(6px);
+      display: none;
+      place-items: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal-backdrop.open {
+      display: grid;
+    }
+
+    .modal-box {
+      width: 100%;
+      max-width: 560px;
+      padding: 24px;
+      animation: popIn 0.25s ease-out;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .toast-stack {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      z-index: 120;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      background: var(--bg-glass-strong);
+      border: 1px solid var(--border-glow);
+      color: var(--text-primary);
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
+      animation: fadeSlideUp 0.25s ease-out;
+      max-width: 360px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1220px) {
+      .counter-grid {
+        grid-template-columns: 340px 1fr;
+      }
+      .tg-panel {
+        grid-column: span 2;
+        max-height: 420px;
+      }
+      .wf-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 920px) {
+      .hero-card { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .bento-span-2, .bento-span-3 { grid-column: span 6; }
+      .counter-grid { grid-template-columns: 1fr; }
+      .tg-panel { grid-column: span 1; }
+      .navbar { flex-wrap: wrap; }
+      .status-pill { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="aurora-bg">
+    <div class="aurora-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div class="app-shell">
+    <!-- NAVBAR -->
+    <header class="navbar">
+      <div class="brand" onclick="switchTab('home')">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">
+            <span>Dawaa</span>
+            <span class="ar">دواء</span>
+          </div>
+          <span class="brand-sub">AI Pharmacy Automation Suite</span>
+        </div>
+      </div>
+
+      <nav class="nav-tabs" aria-label="Primary Navigation">
+        <button class="nav-btn" data-tab="home" onclick="switchTab('home')">Home</button>
+        <button class="nav-btn active" data-tab="counter" onclick="switchTab('counter')">
+          Live Counter
+          <span class="nav-badge" id="pendingBadge">1</span>
+        </button>
+        <button class="nav-btn" data-tab="backoffice" onclick="switchTab('backoffice')">Back Office</button>
+        <button class="nav-btn" data-tab="workflows" onclick="switchTab('workflows')">Workflows</button>
+      </nav>
+
+      <div class="nav-actions">
+        <div class="status-pill">
+          <span class="pulse-dot"></span>
+          <span>n8n Engine Online</span>
+        </div>
+        <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="Toggle Light / Dark Mode" aria-label="Toggle theme">
+          🌙
+        </button>
+      </div>
+    </header>
+
+    <main class="main-container">
+      <!-- ==================== HOME TAB ==================== -->
+      <section id="tab-home" class="tab-view">
+        <div class="glass-card hero-card">
+          <div>
+            <div class="hero-badge">⚡ n8n + Gemini 2.5 Flash + WhatsApp + Telegram</div>
+            <h1 class="hero-title">
+              Autonomous Pharmacy Counter &amp; <span class="gradient-text">Clinical Operations</span>
+            </h1>
+            <p class="hero-desc">
+              Dawaa (<span class="arabic">دواء</span>) automates bilingual WhatsApp prescription parsing, fuzzy catalog matching, Telegram pharmacist approvals for controlled medications, 15-minute reservation expiry sweeps, daily 22:00 reorder reports, and centralized error triage.
+            </p>
+            <div class="hero-ctas">
+              <button class="btn-primary" onclick="switchTab('counter')">💬 Launch Live Counter</button>
+              <button class="btn-secondary" onclick="switchTab('backoffice')">📊 Open Back Office</button>
+              <button class="btn-secondary" onclick="switchTab('workflows')">🔀 Explore n8n Workflows</button>
+            </div>
+          </div>
+
+          <div class="ecg-panel">
+            <div class="ecg-header">
+              <span class="mono">DAWAA.TELEMETRY // LIVE</span>
+              <span style="color:#10b981;font-weight:700;">● 99.9% Healthy</span>
+            </div>
+            <svg class="ecg-svg" viewBox="0 0 420 80" preserveAspectRatio="none">
+              <path class="ecg-path" d="M0,45 L75,45 L90,45 L100,25 L112,62 L124,10 L138,68 L150,45 L210,45 L225,45 L235,28 L246,60 L258,12 L272,66 L284,45 L350,45 L362,30 L372,58 L384,18 L396,60 L408,45 L420,45" />
+            </svg>
+            <div class="ecg-stats">
+              <div class="ecg-stat-box">
+                <div class="ecg-stat-val">5</div>
+                <div class="ecg-stat-lbl">Active Pipelines</div>
+              </div>
+              <div class="ecg-stat-box">
+                <div class="ecg-stat-val">15m</div>
+                <div class="ecg-stat-lbl">Expiry Restock</div>
+              </div>
+              <div class="ecg-stat-box">
+                <div class="ecg-stat-val">22:00</div>
+                <div class="ecg-stat-lbl">Reorder Cron</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="glass-card kpi-card">
+            <div class="kpi-top">
+              <span>Catalog Inventory</span>
+              <span class="kpi-icon" style="background:rgba(6,182,212,0.14);color:var(--cyan-light);">💊</span>
+            </div>
+            <div class="kpi-val" id="kpiSkus">10 SKUs</div>
+            <div class="kpi-foot" id="kpiUnits">185 total units in stock</div>
+          </div>
+          <div class="glass-card kpi-card">
+            <div class="kpi-top">
+              <span>Reservations</span>
+              <span class="kpi-icon" style="background:rgba(20,184,166,0.14);color:var(--teal);">📋</span>
+            </div>
+            <div class="kpi-val" id="kpiRes">4</div>
+            <div class="kpi-foot" id="kpiPending">1 pending pharmacist review</div>
+          </div>
+          <div class="glass-card kpi-card">
+            <div class="kpi-top">
+              <span>Low Stock Alerts</span>
+              <span class="kpi-icon" style="background:rgba(245,158,11,0.15);color:var(--amber);">📦</span>
+            </div>
+            <div class="kpi-val" id="kpiLow">3</div>
+            <div class="kpi-foot">Items at or below reorder_level</div>
+          </div>
+          <div class="glass-card kpi-card">
+            <div class="kpi-top">
+              <span>Error Monitor</span>
+              <span class="kpi-icon" style="background:rgba(244,63,94,0.15);color:var(--rose);">🛡️</span>
+            </div>
+            <div class="kpi-val" id="kpiErrors">1</div>
+            <div class="kpi-foot">Deduplicated by fingerprint</div>
+          </div>
+        </div>
+
+        <div class="bento-grid">
+          <div class="glass-card bento-card bento-span-2">
+            <span class="bento-tag">WhatsApp Cloud API</span>
+            <h3>Bilingual Text &amp; Rx Photo Intake</h3>
+            <p>Normalizes incoming WhatsApp payloads, detects text vs. prescription images, downloads media URLs, and prepares structured prompts for Gemini 2.5 Flash.</p>
+          </div>
+          <div class="glass-card bento-card bento-span-2">
+            <span class="bento-tag">Gemini 2.5 Flash</span>
+            <h3>AI Extraction &amp; Fuzzy Matching</h3>
+            <p>Extracts medicine names and quantities from Arabic, English, or messy typos, then matches SKUs against the live Google Sheets Catalog with Levenshtein distance.</p>
+          </div>
+          <div class="glass-card bento-card bento-span-2">
+            <span class="bento-tag">Telegram Bot Desk</span>
+            <h3>Controlled Drug Approval Loop</h3>
+            <p>Routes controlled items (e.g., Xanax, Night Calm) to the pharmacist Telegram group with inline Approve/Reject buttons that update stock and notify the patient.</p>
+          </div>
+          <div class="glass-card bento-card bento-span-3">
+            <span class="bento-tag">Cron Operations</span>
+            <h3>15-Minute Expiry Sweep &amp; 22:00 Reorder</h3>
+            <p>Every 15 minutes, overdue holds are marked <code>expired</code> and quantities automatically return to <code>Catalog</code>. Every night at <code>0 22 * * *</code>, low-stock lists dispatch to Telegram and Gmail.</p>
+          </div>
+          <div class="glass-card bento-card bento-span-3">
+            <span class="bento-tag">Reliability</span>
+            <h3>Global Error Classification &amp; Escalation</h3>
+            <p>Captures failures via n8n Error Trigger, classifies Auth, Rate Limit, Timeout, or Parsing errors with suggested fixes, logs to Sheets, alerts Telegram, and emails admins on critical incidents.</p>
+          </div>
+        </div>
+
+        <footer class="glass-card footer-bar">
+          <div>Built by <strong>Mostafa Mahmoud (Mostafa Abdelmobdy)</strong> — AI &amp; Workflow Automation Engineer</div>
+          <div class="footer-links">
+            <a href="https://github.com/MostafaAbdelmobdy/Dawaa-pharmacy" target="_blank" rel="noopener">GitHub Repo</a>
+            <a href="https://www.linkedin.com/in/mostafa-abdelmobdy" target="_blank" rel="noopener">LinkedIn</a>
+            <a href="https://mostafaabdelmobdy.github.io" target="_blank" rel="noopener">Portfolio</a>
+          </div>
+        </footer>
+      </section>
+
+      <!-- ==================== LIVE COUNTER TAB ==================== -->
+      <section id="tab-counter" class="tab-view active">
+        <div class="counter-grid">
+          <!-- Col 1: WhatsApp Mockup -->
+          <div class="phone-frame">
+            <div class="phone-screen">
+              <div class="wa-header">
+                <div class="wa-avatar">✚</div>
+                <div class="wa-meta">
+                  <h3>Dawaa Pharmacy <span style="font-size:0.75rem;color:#67e8f9;">✔</span></h3>
+                  <span>WhatsApp Business • AI Counter</span>
+                </div>
+              </div>
+
+              <div class="wa-messages" id="waMessages"></div>
+
+              <div class="wa-chips">
+                <button class="chip-btn" onclick="sendQuickMessage('Panadol 500')">Panadol 500</button>
+                <button class="chip-btn" onclick="sendQuickMessage('Brufen 400, Antinal')">Brufen 400, Antinal</button>
+                <button class="chip-btn" onclick="sendQuickMessage('1x Xanax')">1x Xanax</button>
+                <button class="chip-btn" onclick="sendPrescriptionPhoto()">📷 Prescription photo</button>
+                <button class="chip-btn arabic" onclick="sendQuickMessage('بنادول 500')">بنادول 500</button>
+                <button class="chip-btn" onclick="sendQuickMessage('Hi')">Hi</button>
+              </div>
+
+              <form class="wa-input-bar" onsubmit="handleWaSubmit(event)">
+                <button type="button" class="icon-btn" style="width:34px;height:34px;border-radius:50%;" title="Simulate Prescription Photo" onclick="sendPrescriptionPhoto()">📷</button>
+                <input id="waInput" class="wa-input" type="text" placeholder="Type medicine e.g. Panadol, 1x Xanax..." autocomplete="off" />
+                <button type="submit" class="wa-send-btn" title="Send">➤</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Col 2: Real-time Execution Log -->
+          <div class="glass-card log-panel">
+            <div class="panel-header">
+              <div class="panel-title-wrap">
+                <h2>Execution Log</h2>
+                <span class="mono" style="font-size:0.74rem;color:var(--text-muted);" id="execIdLabel">exec #240</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="exec-badge exec-idle" id="execStatus">ready</span>
+                <button class="ops-btn" style="padding:5px 10px;font-size:0.74rem;" onclick="clearLog()">Clear</button>
+              </div>
+            </div>
+            <div class="log-body" id="logBody">
+              <div class="log-empty">
+                <div style="font-size:1.8rem;">⚡</div>
+                <div><strong>n8n Execution Stream Ready</strong></div>
+                <div style="max-width:320px;font-size:0.76rem;">Send a medicine name or click a quick-test chip on the left to watch each n8n node execute in real time.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Col 3: Telegram Pharmacists Group -->
+          <div class="glass-card tg-panel">
+            <div class="tg-header">
+              <div class="tg-avatar">Rx</div>
+              <div>
+                <h3 style="font-size:0.95rem;font-weight:700;">Dawaa Pharmacists</h3>
+                <span style="font-size:0.74rem;opacity:0.86;">Telegram group • @SOUS80Bot</span>
+              </div>
+            </div>
+            <div class="tg-body" id="tgBody"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== BACK OFFICE TAB ==================== -->
+      <section id="tab-backoffice" class="tab-view">
+        <div class="glass-card ops-toolbar">
+          <div>
+            <h2 style="font-size:1.05rem;font-weight:800;">Dawaa Pharmacy Data — Live Back Office</h2>
+            <p style="font-size:0.8rem;color:var(--text-secondary);">Synchronized with the Live Counter &amp; Background n8n Cron Jobs</p>
+          </div>
+          <div class="ops-buttons">
+            <button class="ops-btn" onclick="runExpirySweep()">⏱️ Run 15-Min Expiry Sweep</button>
+            <button class="ops-btn warn" onclick="runLowStockCheck()">📦 Run 22:00 Low Stock Check</button>
+            <button class="ops-btn danger" onclick="simulateErrorTrigger()">🚨 Simulate Error Trigger</button>
+          </div>
+        </div>
+
+        <div class="subtabs">
+          <div class="subtab-group">
+            <button class="subtab-btn active" data-sheet="catalog" onclick="switchSheet('catalog')">Catalog (10)</button>
+            <button class="subtab-btn" data-sheet="reservations" onclick="switchSheet('reservations')">Reservations (<span id="resCountTab">4</span>)</button>
+            <button class="subtab-btn" data-sheet="errors" onclick="switchSheet('errors')">Error Logs (<span id="errCountTab">1</span>)</button>
+          </div>
+
+          <div class="filter-bar" id="catalogFilters">
+            <input id="catalogSearch" class="search-input" type="text" placeholder="Search SKU, name, ingredient..." oninput="renderCatalog()" />
+            <select id="catalogFilter" class="select-input" onchange="renderCatalog()">
+              <option value="all">All Medicines</option>
+              <option value="otc">OTC Only</option>
+              <option value="controlled">Controlled Only</option>
+              <option value="low">Low Stock (≤ Reorder)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="glass-card table-wrap" id="sheetContainer"></div>
+      </section>
+
+      <!-- ==================== WORKFLOWS TAB ==================== -->
+      <section id="tab-workflows" class="tab-view">
+        <div class="glass-card wf-header">
+          <div>
+            <h2 style="font-size:1.05rem;font-weight:800;">Interactive n8n Workflow Explorer</h2>
+            <p style="font-size:0.8rem;color:var(--text-secondary);">Click any node to inspect its parameters, expressions, and JavaScript logic</p>
+          </div>
+          <div class="subtab-group">
+            <button class="subtab-btn active" data-wf="main" onclick="switchWorkflow('main')">Dawaa 1 - Requests &amp; Reservations.json</button>
+            <button class="subtab-btn" data-wf="ops" onclick="switchWorkflow('ops')">Error Handling(Dawaa).json</button>
+          </div>
+        </div>
+
+        <div class="wf-layout">
+          <div class="glass-card wf-canvas-card" id="wfCanvas"></div>
+          <div class="glass-card inspector-card" id="wfInspector">
+            <div class="bento-tag" style="margin-bottom:10px;">Node Inspector</div>
+            <h3 id="inspTitle">Select a Node</h3>
+            <p id="inspType" class="mono" style="font-size:0.76rem;color:var(--cyan-light);margin:4px 0 10px;">Click any node on the canvas</p>
+            <p id="inspDesc" style="font-size:0.84rem;color:var(--text-secondary);line-height:1.55;">
+              Inspect exact n8n node configurations, Google Sheets column mappings, Gemini prompts, and JavaScript snippets from your deployed Dawaa Pharmacy workflows.
+            </p>
+            <div class="inspector-code" id="inspCode">// Node snippet or settings will appear here</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" id="modalBackdrop" onclick="if(event.target===this) closeModal()">
+    <div class="glass-card modal-box">
+      <div class="modal-head">
+        <h3 id="modalTitle" style="font-size:1rem;font-weight:800;">Operation Preview</h3>
+        <button class="icon-btn" style="width:30px;height:30px;" onclick="closeModal()">✕</button>
+      </div>
+      <div id="modalBody" style="font-size:0.85rem;color:var(--text-secondary);line-height:1.6;"></div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toastStack"></div>
+
+  <script>
+    // ===================== INITIAL STATE (DAWAA PHARMACY DATA) =====================
+    const ARABIC_ALIASES = {
+      'بنادول': 'Panadol',
+      'بندول': 'Panadol',
+      'ابيمول': 'Abimol',
+      'أبيمول': 'Abimol',
+      'بروفين': 'Brufen 400',
+      'انتينال': 'Antinal',
+      'أنتينال': 'Antinal',
+      'اوجمنتين': 'Augmentin 1g',
+      'أوجمنتين': 'Augmentin 1g',
+      'كتافلام': 'Cataflam',
+      'كونجستال': 'Congestal',
+      'كونترولوك': 'Controloc',
+      'زاناكس': 'Xanax',
+      'زانكس': 'Xanax',
+      'نايت كالم': 'Night Calm'
+    };
+
+    const state = {
+      execCounter: 241,
+      activeSheet: 'catalog',
+      activeWorkflow: 'main',
+      isBusy: false,
+      catalog: [
+        { sku: 'P001', name: 'Panadol', active_ingredient: 'paracetamol', strength: '500 mg', form: 'tablets x24', price_egp: 45, stock: 29, reorder_level: 10, controlled: 'no' },
+        { sku: 'P002', name: 'Abimol', active_ingredient: 'paracetamol', strength: '500 mg', form: 'tablets x20', price_egp: 25, stock: 60, reorder_level: 10, controlled: 'no' },
+        { sku: 'P003', name: 'Brufen 400', active_ingredient: 'ibuprofen', strength: '400 mg', form: 'tablets x30', price_egp: 52, stock: 22, reorder_level: 10, controlled: 'no' },
+        { sku: 'P004', name: 'Antinal', active_ingredient: 'nifuroxazide', strength: '200 mg', form: 'capsules x24', price_egp: 42, stock: 18, reorder_level: 10, controlled: 'no' },
+        { sku: 'P005', name: 'Augmentin 1g', active_ingredient: 'amoxicillin / clavulanate', strength: '1000 mg', form: 'tablets x14', price_egp: 118, stock: 9, reorder_level: 10, controlled: 'no' },
+        { sku: 'P006', name: 'Cataflam', active_ingredient: 'diclofenac potassium', strength: '50 mg', form: 'tablets x20', price_egp: 64, stock: 15, reorder_level: 10, controlled: 'no' },
+        { sku: 'P007', name: 'Congestal', active_ingredient: 'paracetamol / chlorpheniramine', strength: '650 mg', form: 'tablets x20', price_egp: 38, stock: 7, reorder_level: 10, controlled: 'no' },
+        { sku: 'P008', name: 'Controloc', active_ingredient: 'pantoprazole', strength: '40 mg', form: 'tablets x14', price_egp: 135, stock: 14, reorder_level: 8, controlled: 'no' },
+        { sku: 'P009', name: 'Xanax', active_ingredient: 'alprazolam', strength: '0.5 mg', form: 'tablets x30', price_egp: 70, stock: 5, reorder_level: 5, controlled: 'yes' },
+        { sku: 'P010', name: 'Night Calm', active_ingredient: 'eszopiclone', strength: '3 mg', form: 'tablets x20', price_egp: 55, stock: 6, reorder_level: 5, controlled: 'yes' }
+      ],
+      reservations: [
+        { res_id: 'R-261117-H6GY-1', created_at: '2026-11-17 08:37', customer_id: '201060034670', customer_name: 'Mostafa', sku: 'P001', name: 'Panadol', qty: 1, total_egp: 45, status: 'reserved', expires_at: '2026-11-18 08:34', pharmacist: '', note: '' },
+        { res_id: 'R-261117-RGM2-1', created_at: '2026-11-17 09:10', customer_id: '201060034670', customer_name: 'Mostafa', sku: 'P001', name: 'Panadol', qty: 1, total_egp: 45, status: 'reserved', expires_at: '2026-11-18 09:10', pharmacist: '', note: '' },
+        { res_id: 'R-261120-RL3B-1', created_at: '2026-11-20 00:40', customer_id: '201060034670', customer_name: 'Mostafa', sku: 'P001', name: 'Panadol', qty: 1, total_egp: 45, status: 'reserved', expires_at: '2026-11-21 00:40', pharmacist: '', note: '' },
+        { res_id: 'R-261120-3ZIR-1', created_at: '2026-11-20 00:57', customer_id: '201060034670', customer_name: 'Mostafa', sku: 'P009', name: 'Xanax', qty: 1, total_egp: 70, status: 'pending_pharmacist', expires_at: '', pharmacist: '', note: 'controlled' }
+      ],
+      errors: [
+        { time: '2026-11-21T15:41:17Z', workflow: 'Dawaa 1 - Requests & Reservations', node: 'AI Read Request', type: 'Rate Limit', severity: 'warning', message: '429 Gemini API quota exceeded transiently', suggested_fix: 'Enable Retry On Fail with exponential backoff.', exec_id: '231', fingerprint: 'dawaa_1|ai_read_request|rate_limit', status: 'open' }
+      ],
+      tgMessages: [
+        {
+          id: 'tg-init-1',
+          type: 'info',
+          text: 'Requests that need a pharmacist (controlled medications or unreadable prescriptions) appear here with Approve and Reject buttons.'
+        },
+        {
+          id: 'tg-pend-1',
+          type: 'approval',
+          resIds: ['R-261120-3ZIR-1'],
+          customerName: 'Mostafa',
+          customerId: '201060034670',
+          summary: '1x Xanax (0.5 mg • Controlled)',
+          total: 70,
+          status: 'pending',
+          by: ''
+        }
+      ],
+      flashedSkus: new Set(),
+      flashedRes: new Set()
+    };
+
+    // ===================== UTILITIES =====================
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const nowTimeStr = () => new Date().toTimeString().slice(0, 5);
+    const makeResId = () => {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+      return `R-261121-${code}-1`;
+    };
+
+    function levenshtein(a, b) {
+      a = a.toLowerCase(); b = b.toLowerCase();
+      const dp = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+      for (let j = 1; j <= b.length; j++) dp[0][j] = j;
+      for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+          dp[i][j] = Math.min(
+            dp[i - 1][j] + 1,
+            dp[i][j - 1] + 1,
+            dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+          );
+        }
+      }
+      return dp[a.length][b.length];
+    }
+
+    function fuzzyFindMedicine(rawToken) {
+      let clean = rawToken.trim();
+      for (const [ar, en] of Object.entries(ARABIC_ALIASES)) {
+        if (clean.includes(ar)) clean = en;
+      }
+      const lower = clean.toLowerCase().replace(/\b\d+\s*(mg|g|ml|x)?\b/g, '').trim();
+      if (!lower || lower.length < 3) return null;
+
+      let best = null;
+      let bestScore = Infinity;
+      for (const item of state.catalog) {
+        const nameLower = item.name.toLowerCase();
+        const ingLower = item.active_ingredient.toLowerCase();
+        if (nameLower.includes(lower) || lower.includes(nameLower.split(' ')[0]) || ingLower.includes(lower)) {
+          return item;
+        }
+        const dist = levenshtein(lower, nameLower.split(' ')[0]);
+        if (dist <= 2 && dist < bestScore) {
+          bestScore = dist;
+          best = item;
+        }
+      }
+      return best;
+    }
+
+    function parseUserRequest(text) {
+      const segments = text.split(/[,،&\n+]|\band\b|\bو\b/i).map(s => s.trim()).filter(Boolean);
+      const found = [];
+      for (const seg of segments) {
+        const qtyMatch = seg.match(/(\d+)\s*[x×]/i) || seg.match(/^(\d+)\s+/);
+        const qty = qtyMatch ? Math.max(1, Math.min(10, parseInt(qtyMatch[1], 10))) : 1;
+        const stripped = seg.replace(/^\d+\s*[x×]?\s*/i, '').trim();
+        const item = fuzzyFindMedicine(stripped);
+        if (item) {
+          const existing = found.find(f => f.item.sku === item.sku);
+          if (existing) existing.qty += qty;
+          else found.push({ item, qty });
+        }
+      }
+      return found;
+    }
+
+    function showToast(msg) {
+      const stack = document.getElementById('toastStack');
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.textContent = msg;
+      stack.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(8px)';
+        el.style.transition = 'all 0.25s ease';
+        setTimeout(() => el.remove(), 260);
+      }, 3200);
+    }
+
+    function openModal(title, html) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').innerHTML = html;
+      document.getElementById('modalBackdrop').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modalBackdrop').classList.remove('open');
+    }
+
+    // ===================== NAVIGATION & THEME =====================
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+      if (tabName === 'backoffice') renderBackOffice();
+      if (tabName === 'workflows') renderWorkflowGraph();
+      updateTelemetry();
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      document.getElementById('themeToggle').textContent = next === 'dark' ? '🌙' : '☀️';
+    }
+
+    function updateTelemetry() {
+      const totalUnits = state.catalog.reduce((s, i) => s + Number(i.stock), 0);
+      const lowCount = state.catalog.filter(i => i.stock <= i.reorder_level).length;
+      const pendingCount = state.reservations.filter(r => r.status === 'pending_pharmacist').length;
+
+      document.getElementById('kpiSkus').textContent = `${state.catalog.length} SKUs`;
+      document.getElementById('kpiUnits').textContent = `${totalUnits} total units in stock`;
+      document.getElementById('kpiRes').textContent = state.reservations.length;
+      document.getElementById('kpiPending').textContent = `${pendingCount} pending pharmacist review`;
+      document.getElementById('kpiLow').textContent = lowCount;
+      document.getElementById('kpiErrors').textContent = state.errors.length;
+      document.getElementById('resCountTab').textContent = state.reservations.length;
+      document.getElementById('errCountTab').textContent = state.errors.length;
+
+      const badge = document.getElementById('pendingBadge');
+      badge.textContent = pendingCount;
+      badge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+    }
+
+    // ===================== WHATSAPP & EXECUTION LOG =====================
+    function appendWaBubble(sender, html) {
+      const box = document.getElementById('waMessages');
+      const div = document.createElement('div');
+      div.className = `wa-bubble ${sender}`;
+      div.innerHTML = `${html}<span class="wa-time">${nowTimeStr()}</span>`;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+      return div;
+    }
+
+    function showTyping() {
+      return appendWaBubble('bot', '<div class="typing-dots"><span></span><span></span><span></span></div>');
+    }
+
+    function clearLog() {
+      document.getElementById('logBody').innerHTML = `
+        <div class="log-empty">
+          <div style="font-size:1.8rem;">⚡</div>
+          <div><strong>Log Cleared</strong></div>
+          <div style="font-size:0.76rem;">Send a message on WhatsApp or click Approve/Reject on Telegram.</div>
+        </div>`;
+      setExecStatus('ready', 'exec-idle');
+    }
+
+    function setExecStatus(text, cls) {
+      const el = document.getElementById('execStatus');
+      el.textContent = text;
+      el.className = `exec-badge ${cls}`;
+    }
+
+    function startLogSection(title) {
+      const body = document.getElementById('logBody');
+      if (body.querySelector('.log-empty')) body.innerHTML = '';
+      const execId = state.execCounter++;
+      document.getElementById('execIdLabel').textContent = `exec #${execId}`;
+      const div = document.createElement('div');
+      div.className = 'log-section-divider';
+      div.innerHTML = `<span>${title}</span><span>#${execId}</span>`;
+      body.appendChild(div);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    function appendLogStep(nodeName, detail, dot = 'dot-emerald', jsonPayload = null) {
+      const body = document.getElementById('logBody');
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.innerHTML = `
+        <span class="log-dot ${dot}"></span>
+        <div>
+          <span class="log-node">${nodeName}</span>
+          <span class="log-detail"> · ${detail}</span>
+          ${jsonPayload ? `<code class="log-json">${JSON.stringify(jsonPayload)}</code>` : ''}
+        </div>
+      `;
+      body.appendChild(line);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    async function handleWaSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('waInput');
+      const text = input.value.trim();
+      if (!text || state.isBusy) return;
+      input.value = '';
+      await runCustomerFlow({ type: 'text', text });
+    }
+
+    async function sendQuickMessage(text) {
+      if (state.isBusy) return;
+      await runCustomerFlow({ type: 'text', text });
+    }
+
+    async function sendPrescriptionPhoto() {
+      if (state.isBusy) return;
+      await runCustomerFlow({
+        type: 'image',
+        text: '1x Augmentin 1g, 1x Xanax',
+        rxCard: `
+          <div class="rx-preview">
+            <div class="rx-preview-title"><span>📷 Prescription_Rx.jpg</span><span>142 KB</span></div>
+            <div>Dr. Kareem Clinic — Cairo<br/>• Augmentin 1g (1 box)<br/>• Xanax 0.5 mg (1 box — Controlled)</div>
+          </div>`
+      });
+    }
+
+    async function runCustomerFlow({ type, text, rxCard = '' }) {
+      state.isBusy = true;
+      setExecStatus('running', 'exec-running');
+      appendWaBubble('user', rxCard ? `${rxCard}<span>Sent prescription photo</span>` : text);
+      const typing = showTyping();
+
+      startLogSection('Dawaa 1 — Requests & Reservations');
+      appendLogStep('WhatsApp Trigger', `message from Mostafa (${type})`, 'dot-emerald');
+      await sleep(240);
+      appendLogStep('Normalize Message', `type = ${type} · wa_id = 201060034670`, 'dot-emerald');
+      await sleep(240);
+
+      if (type === 'image') {
+        appendLogStep('Text or Image', 'is_photo = true → Media branch', 'dot-cyan');
+        await sleep(220);
+        appendLogStep('Get Photo URL', 'Meta Media API → 200 OK', 'dot-cyan');
+        await sleep(220);
+        appendLogStep('Download Photo', 'binary image/jpeg (142 KB)', 'dot-cyan');
+        await sleep(220);
+        appendLogStep('Prepare Prescription Read', 'multimodal prompt for Gemini', 'dot-cyan');
+      } else {
+        appendLogStep('Text or Image', 'is_photo = false → Text branch', 'dot-emerald');
+        await sleep(220);
+        appendLogStep('Prepare Text Read', 'prompt for Gemini 2.5 Flash', 'dot-emerald');
+      }
+      await sleep(320);
+
+      const matches = parseUserRequest(text);
+      const aiJson = {
+        is_prescription: type === 'image',
+        medicines: matches.map(m => ({ name: m.item.name, qty: m.qty }))
+      };
+
+      appendLogStep('AI Read Request', 'Gemini 2.5 Flash →', 'dot-cyan', aiJson);
+      await sleep(280);
+      appendLogStep('Read Catalog', `${state.catalog.length} products loaded`, 'dot-emerald');
+      await sleep(240);
+      appendLogStep('Match Catalog', `${matches.length} SKU match(es) via Levenshtein`, 'dot-emerald');
+      await sleep(260);
+
+      typing.remove();
+
+      if (matches.length === 0) {
+        appendLogStep('Route Request', 'Nothing Found', 'dot-amber');
+        await sleep(220);
+        appendLogStep('Nothing Found Reply', 'asks for a medicine name or clear photo', 'dot-emerald');
+        appendWaBubble('bot', `Hello! Send the medicine name (e.g. Panadol 500) or a clear photo of the prescription.<br/><span class="arabic">ابعت اسم الدوا أو صورة واضحة للروشتة.</span>`);
+        setExecStatus('succeeded', 'exec-succeeded');
+        state.isBusy = false;
+        return;
+      }
+
+      const hasControlled = matches.some(m => m.item.controlled === 'yes');
+      const createdRows = [];
+      const createdAt = '2026-11-21 ' + nowTimeStr();
+      const expiresAt = '2026-11-22 ' + nowTimeStr();
+
+      for (const { item, qty } of matches) {
+        const resId = makeResId();
+        const isCtrl = item.controlled === 'yes';
+        const row = {
+          res_id: resId,
+          created_at: createdAt,
+          customer_id: '201060034670',
+          customer_name: 'Mostafa',
+          sku: item.sku,
+          name: item.name,
+          qty,
+          total_egp: item.price_egp * qty,
+          status: hasControlled ? 'pending_pharmacist' : 'reserved',
+          expires_at: hasControlled ? '' : expiresAt,
+          pharmacist: '',
+          note: isCtrl ? 'controlled' : ''
+        };
+        state.reservations.unshift(row);
+        state.flashedRes.add(resId);
+        createdRows.push(row);
+      }
+
+      if (hasControlled) {
+        appendLogStep('Route Request', 'Pharmacist Review (controlled item detected)', 'dot-amber');
+        await sleep(240);
+        appendLogStep('One Row per Medicine', `${createdRows.length} reservation line(s)`, 'dot-emerald');
+        await sleep(220);
+        appendLogStep('Save Reservation Line', `appended status = pending_pharmacist`, 'dot-emerald');
+        await sleep(220);
+        appendLogStep('Auto or Pharmacist?', 'controlled = true → Telegram desk', 'dot-amber');
+        await sleep(240);
+        appendLogStep('Alert Pharmacists (Telegram)', 'inline Approve / Reject sent', 'dot-cyan');
+        await sleep(220);
+        appendLogStep('Tell Customer: Pharmacist Checking', 'WhatsApp update delivered', 'dot-emerald');
+
+        const summary = createdRows.map(r => `${r.qty}x ${r.name}${r.note ? ' (Controlled)' : ''}`).join(', ');
+        const total = createdRows.reduce((s, r) => s + r.total_egp, 0);
+
+        state.tgMessages.push({
+          id: 'tg-' + Date.now(),
+          type: 'approval',
+          resIds: createdRows.map(r => r.res_id),
+          customerName: 'Mostafa',
+          customerId: '201060034670',
+          summary,
+          total,
+          status: 'pending',
+          by: ''
+        });
+        renderTelegram();
+
+        appendWaBubble('bot', `🩺 Your request (<strong>${summary}</strong>) includes a controlled medication and has been sent to our pharmacist for quick review. You will be notified shortly.`);
+        setExecStatus('waiting_approval', 'exec-waiting');
+        showToast('Telegram pharmacist approval requested');
+      } else {
+        appendLogStep('Route Request', 'Auto-Reserved (all OTC items)', 'dot-emerald');
+        await sleep(220);
+        appendLogStep('One Row per Medicine', `${createdRows.length} reservation line(s)`, 'dot-emerald');
+        await sleep(220);
+        appendLogStep('Save Reservation Line', `appended status = reserved`, 'dot-emerald');
+        await sleep(220);
+        appendLogStep('Auto or Pharmacist?', 'controlled = false → Instant reserve', 'dot-emerald');
+        await sleep(220);
+
+        for (const r of createdRows) {
+          const catItem = state.catalog.find(c => c.sku === r.sku);
+          if (catItem) {
+            catItem.stock = Math.max(0, catItem.stock - r.qty);
+            state.flashedSkus.add(catItem.sku);
+          }
+        }
+
+        appendLogStep('Take Stock Now', 'computed updated SKU quantities', 'dot-emerald');
+        await sleep(220);
+        appendLogStep('Update Stock', `Catalog sheet updated (${createdRows.map(r => r.sku).join(', ')})`, 'dot-emerald');
+        await sleep(220);
+        appendLogStep('Confirm Reservation', 'WhatsApp confirmation sent', 'dot-emerald');
+
+        const summary = createdRows.map(r => `${r.qty}x ${r.name} (${r.total_egp} EGP)`).join('<br/>• ');
+        const total = createdRows.reduce((s, r) => s + r.total_egp, 0);
+        appendWaBubble('bot', `✅ <strong>Reservation Confirmed!</strong><br/>• ${summary}<br/><strong>Total:</strong> ${total} EGP<br/>Valid for 24h at Dawaa Pharmacy.`);
+        setExecStatus('succeeded', 'exec-succeeded');
+        showToast('OTC order auto-reserved & stock deducted');
+      }
+
+      updateTelemetry();
+      state.isBusy = false;
+    }
+
+    // ===================== TELEGRAM PHARMACIST CALLBACK =====================
+    function renderTelegram() {
+      const box = document.getElementById('tgBody');
+      box.innerHTML = '';
+      for (const msg of state.tgMessages) {
+        const card = document.createElement('div');
+        card.className = 'tg-card';
+        if (msg.type === 'info') {
+          card.innerHTML = `<div class="tg-bot-name"><span>Dawaa Bot</span><span>${nowTimeStr()}</span></div><div>${msg.text}</div>`;
+        } else if (msg.type === 'alert') {
+          card.innerHTML = `<div class="tg-bot-name"><span>${msg.title}</span><span>${nowTimeStr()}</span></div><div style="white-space:pre-line;">${msg.text}</div>`;
+        } else {
+          const decidedHtml = msg.status === 'pending'
+            ? `<div class="tg-actions">
+                <button class="tg-btn tg-btn-approve" onclick="handlePharmacistDecision('${msg.id}', 'approve')">✅ Approve</button>
+                <button class="tg-btn tg-btn-reject" onclick="handlePharmacistDecision('${msg.id}', 'reject')">❌ Reject</button>
+              </div>`
+            : `<div class="tg-decided ${msg.status}">${msg.status === 'approved' ? '✅ Approved' : '❌ Rejected'} by @${msg.by}</div>`;
+
+          card.innerHTML = `
+            <div class="tg-bot-name"><span>Dawaa Bot • Rx Approval</span><span>${msg.resIds[0]}</span></div>
+            <div><strong>Patient:</strong> ${msg.customerName} (${msg.customerId})</div>
+            <div><strong>Items:</strong> ${msg.summary}</div>
+            <div><strong>Total:</strong> ${msg.total} EGP</div>
+            ${decidedHtml}
+          `;
+        }
+        box.appendChild(card);
+      }
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function handlePharmacistDecision(msgId, action) {
+      if (state.isBusy) return;
+      const msg = state.tgMessages.find(m => m.id === msgId);
+      if (!msg || msg.status !== 'pending') return;
+
+      state.isBusy = true;
+      setExecStatus('running', 'exec-running');
+      const isApproved = action === 'approve';
+      const pharmacist = 'sasa50pwg';
+
+      startLogSection('Telegram Pharmacist Decision Callback');
+      appendLogStep('Telegram Trigger', `callback_query = ${action}_${msg.resIds[0]}`, 'dot-cyan');
+      await sleep(220);
+      appendLogStep('Parse Decision', `action = ${action} · by = ${pharmacist}`, 'dot-cyan');
+      await sleep(220);
+      appendLogStep('Find Pending Lines', `${msg.resIds.length} matched pending_pharmacist row(s)`, 'dot-emerald');
+      await sleep(220);
+      appendLogStep('Read Catalog1', `${state.catalog.length} catalog SKUs`, 'dot-emerald');
+      await sleep(220);
+      appendLogStep('Apply Decision', `new_status = ${isApproved ? 'reserved' : 'rejected'}`, 'dot-emerald');
+      await sleep(220);
+      appendLogStep('Answer Query a callback', isApproved ? '✅ Approved' : '❌ Rejected', 'dot-cyan');
+      await sleep(200);
+
+      msg.status = isApproved ? 'approved' : 'rejected';
+      msg.by = pharmacist;
+      renderTelegram();
+      appendLogStep('Mark Message Done', 'Telegram inline buttons cleared', 'dot-cyan');
+      await sleep(220);
+
+      const affectedRows = state.reservations.filter(r => msg.resIds.includes(r.res_id));
+      for (const row of affectedRows) {
+        row.status = isApproved ? 'reserved' : 'rejected';
+        row.pharmacist = pharmacist;
+        if (isApproved) row.expires_at = '2026-11-22 ' + nowTimeStr();
+        state.flashedRes.add(row.res_id);
+      }
+
+      appendLogStep('Line Updates', `prepared ${affectedRows.length} sheet update(s)`, 'dot-emerald');
+      await sleep(220);
+      appendLogStep('Update Lines', `Reservations updated on res_id`, 'dot-emerald');
+      await sleep(220);
+      appendLogStep('Approved?', `is_approved === ${isApproved}`, isApproved ? 'dot-emerald' : 'dot-rose');
+      await sleep(220);
+
+      if (isApproved) {
+        for (const row of affectedRows) {
+          const cat = state.catalog.find(c => c.sku === row.sku);
+          if (cat) {
+            cat.stock = Math.max(0, cat.stock - row.qty);
+            state.flashedSkus.add(cat.sku);
+          }
+        }
+        appendLogStep('Stock Rows', 'calculated stock deductions', 'dot-emerald');
+        await sleep(200);
+        appendLogStep('Take Stock (Approved)', 'Catalog stock updated', 'dot-emerald');
+        await sleep(200);
+        appendLogStep('Tell Customer: Approved', 'WhatsApp confirmation sent', 'dot-emerald');
+        appendWaBubble('bot', `✅ Hi ${msg.customerName}, your order (<strong>${msg.summary}</strong>) has been approved by pharmacist @${pharmacist} and is ready for pickup.`);
+        showToast('Order approved & stock deducted');
+      } else {
+        appendLogStep('(Rejected) Send message', 'WhatsApp rejection sent', 'dot-rose');
+        appendWaBubble('bot', `❌ Hi ${msg.customerName}, unfortunately your order (<strong>${msg.summary}</strong>) could not be approved by our pharmacist. Please contact Dawaa Pharmacy for assistance.`);
+        showToast('Order rejected & patient notified');
+      }
+
+      setExecStatus('succeeded', 'exec-succeeded');
+      updateTelemetry();
+      state.isBusy = false;
+    }
+
+    // ===================== BACK OFFICE & CRON SIMULATORS =====================
+    function switchSheet(sheet) {
+      state.activeSheet = sheet;
+      document.querySelectorAll('[data-sheet]').forEach(b => b.classList.toggle('active', b.dataset.sheet === sheet));
+      document.getElementById('catalogFilters').style.display = sheet === 'catalog' ? 'flex' : 'none';
+      renderBackOffice();
+    }
+
+    function renderBackOffice() {
+      if (state.activeSheet === 'catalog') renderCatalog();
+      else if (state.activeSheet === 'reservations') renderReservations();
+      else renderErrors();
+    }
+
+    function adjustStock(sku, delta) {
+      const item = state.catalog.find(c => c.sku === sku);
+      if (!item) return;
+      item.stock = Math.max(0, item.stock + delta);
+      state.flashedSkus.add(sku);
+      updateTelemetry();
+      renderCatalog();
+    }
+
+    function renderCatalog() {
+      const q = (document.getElementById('catalogSearch')?.value || '').toLowerCase();
+      const filter = document.getElementById('catalogFilter')?.value || 'all';
+      const rows = state.catalog.filter(item => {
+        const matchQ = !q || item.sku.toLowerCase().includes(q) || item.name.toLowerCase().includes(q) || item.active_ingredient.toLowerCase().includes(q);
+        const matchF = filter === 'all' || (filter === 'otc' && item.controlled === 'no') || (filter === 'controlled' && item.controlled === 'yes') || (filter === 'low' && item.stock <= item.reorder_level);
+        return matchQ && matchF;
+      });
+
+      const html = `
+        <table>
+          <thead>
+            <tr>
+              <th>SKU</th><th>Medicine</th><th>Active Ingredient</th><th>Price</th><th>Stock Level</th><th>Reorder</th><th>Type</th><th>Adjust</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(i => {
+              const pct = Math.min(100, Math.round((i.stock / 60) * 100));
+              const isLow = i.stock <= i.reorder_level;
+              const barColor = isLow ? 'var(--rose)' : i.stock <= i.reorder_level + 6 ? 'var(--amber)' : 'var(--emerald)';
+              const flash = state.flashedSkus.has(i.sku) ? 'flash-row' : '';
+              return `
+                <tr class="${flash}">
+                  <td class="mono" style="font-weight:700;color:var(--cyan-light);">${i.sku}</td>
+                  <td><strong>${i.name}</strong><div style="font-size:0.72rem;color:var(--text-muted);">${i.strength} · ${i.form}</div></td>
+                  <td style="color:var(--text-secondary);">${i.active_ingredient}</td>
+                  <td class="mono">${i.price_egp} EGP</td>
+                  <td>
+                    <div class="stock-bar-wrap">
+                      <strong class="mono" style="min-width:24px;color:${isLow ? 'var(--rose)' : 'inherit'};">${i.stock}</strong>
+                      <div class="stock-bar"><div class="stock-fill" style="width:${pct}%;background:${barColor};"></div></div>
+                    </div>
+                  </td>
+                  <td class="mono">${i.reorder_level}</td>
+                  <td>${i.controlled === 'yes' ? '<span class="pill pill-rose">Controlled</span>' : '<span class="pill pill-cyan">OTC</span>'}</td>
+                  <td>
+                    <button class="qty-mini-btn" onclick="adjustStock('${i.sku}', -1)">-</button>
+                    <button class="qty-mini-btn" onclick="adjustStock('${i.sku}', 1)">+</button>
+                  </td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>`;
+      document.getElementById('sheetContainer').innerHTML = html;
+      state.flashedSkus.clear();
+    }
+
+    function renderReservations() {
+      const statusBadge = st => {
+        if (st === 'reserved') return '<span class="pill pill-green">reserved</span>';
+        if (st === 'pending_pharmacist') return '<span class="pill pill-amber">pending_pharmacist</span>';
+        if (st === 'expired') return '<span class="pill pill-slate">expired</span>';
+        return '<span class="pill pill-rose">rejected</span>';
+      };
+
+      const html = `
+        <table>
+          <thead>
+            <tr>
+              <th>res_id</th><th>Customer</th><th>Medicine</th><th>Qty</th><th>Total</th><th>Status</th><th>Expires At</th><th>Pharmacist</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${state.reservations.map(r => `
+              <tr class="${state.flashedRes.has(r.res_id) ? 'flash-row' : ''}">
+                <td class="mono" style="color:var(--cyan-light);font-weight:600;">${r.res_id}</td>
+                <td><strong>${r.customer_name}</strong><div class="mono" style="font-size:0.7rem;color:var(--text-muted);">${r.customer_id}</div></td>
+                <td>${r.name} <span class="mono" style="font-size:0.72rem;color:var(--text-muted);">(${r.sku})</span></td>
+                <td class="mono">${r.qty}</td>
+                <td class="mono">${r.total_egp} EGP</td>
+                <td>${statusBadge(r.status)}</td>
+                <td class="mono" style="font-size:0.75rem;">${r.expires_at || '—'}</td>
+                <td class="mono" style="font-size:0.75rem;">${r.pharmacist ? '@' + r.pharmacist : '—'}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+      document.getElementById('sheetContainer').innerHTML = html;
+      state.flashedRes.clear();
+    }
+
+    function renderErrors() {
+      const html = `
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th><th>Workflow / Node</th><th>Type</th><th>Severity</th><th>Message</th><th>Suggested Fix</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${state.errors.map(e => `
+              <tr>
+                <td class="mono" style="font-size:0.74rem;">${e.time.replace('T', ' ').slice(0, 19)}</td>
+                <td><strong>${e.workflow}</strong><div class="mono" style="font-size:0.72rem;color:var(--cyan-light);">${e.node}</div></td>
+                <td>${e.type}</td>
+                <td>${e.severity === 'critical' ? '<span class="pill pill-rose">critical</span>' : '<span class="pill pill-amber">warning</span>'}</td>
+                <td>${e.message}</td>
+                <td style="color:var(--text-secondary);font-size:0.78rem;">${e.suggested_fix}</td>
+                <td><span class="pill pill-cyan">${e.status}</span></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+      document.getElementById('sheetContainer').innerHTML = html;
+    }
+
+    function runExpirySweep() {
+      const now = new Date('2026-11-21T19:40:00').getTime();
+      const expired = state.reservations.filter(r => {
+        if (r.status !== 'reserved' || !r.expires_at) return false;
+        const parsed = new Date(r.expires_at.replace(' ', 'T')).getTime();
+        return !isNaN(parsed) && parsed < now;
+      });
+
+      if (expired.length === 0) {
+        showToast('No overdue reservations found to expire.');
+        return;
+      }
+
+      const restockMap = {};
+      for (const r of expired) {
+        r.status = 'expired';
+        state.flashedRes.add(r.res_id);
+        restockMap[r.sku] = (restockMap[r.sku] || 0) + r.qty;
+      }
+
+      const summaryLines = [];
+      for (const [sku, addQty] of Object.entries(restockMap)) {
+        const cat = state.catalog.find(c => c.sku === sku);
+        if (cat) {
+          cat.stock += addQty;
+          state.flashedSkus.add(sku);
+          summaryLines.push(`${cat.name} (${sku}): +${addQty} returned → new stock: <strong>${cat.stock}</strong>`);
+        }
+      }
+
+      appendWaBubble('bot', `⏱️ Your reservation for <strong>${expired.map(e => e.name).join(', ')}</strong> has expired and the stock has been returned. Reply anytime to place a new order.`);
+      updateTelemetry();
+      switchSheet('reservations');
+
+      openModal('⏱️ 15-Minute Expiry & Restock Completed', `
+        <p>Expired <strong>${expired.length}</strong> overdue reservation line(s) and updated <code>Catalog</code>:</p>
+        <ul style="margin:10px 0 12px 18px;">
+          ${summaryLines.map(l => `<li>${l}</li>`).join('')}
+        </ul>
+        <p style="font-size:0.78rem;color:var(--emerald);">✔ Reservations updated to <code>expired</code> · ✔ Catalog restocked · ✔ WhatsApp expiry notice sent</p>
+      `);
+      showToast(`Expired ${expired.length} reservation(s) & restocked Catalog`);
+    }
+
+    function runLowStockCheck() {
+      const lowItems = state.catalog.filter(i => i.stock <= i.reorder_level);
+      if (lowItems.length === 0) {
+        showToast('All catalog items are above their reorder levels.');
+        return;
+      }
+      const lines = lowItems.map(i => `• ${i.name} (${i.sku}): ${i.stock} left (reorder at ${i.reorder_level})`);
+      const reportText = `📦 Daily Reorder List (2026-11-21)\n\n${lines.join('\n')}`;
+
+      state.tgMessages.push({
+        id: 'tg-low-' + Date.now(),
+        type: 'alert',
+        title: '📦 Cron 22:00 • Reorder List',
+        text: reportText
+      });
+      renderTelegram();
+
+      openModal('📧 Email Purchasing Preview (Cron 0 22 * * *)', `
+        <div class="mono" style="font-size:0.76rem;padding:12px;border-radius:10px;background:#07101f;color:#e2e8f0;white-space:pre-line;">
+<strong>To:</strong> purchasing@dawaapharmacy.eg
+<strong>Subject:</strong> [Reorder Required] ${lowItems.length} Low Stock Items — 2026-11-21
+
+The following ${lowItems.length} items are at or below their reorder level:
+
+${lines.join('\n')}
+        </div>
+        <p style="margin-top:12px;font-size:0.78rem;color:var(--emerald);">✔ Also posted to the Dawaa Pharmacists Telegram channel</p>
+      `);
+      showToast(`22:00 Reorder report sent for ${lowItems.length} low-stock SKU(s)`);
+    }
+
+    function simulateErrorTrigger() {
+      const execId = String(state.execCounter++);
+      const newErr = {
+        time: new Date().toISOString(),
+        workflow: 'Dawaa 1 - Requests & Reservations',
+        node: 'Read Catalog',
+        type: 'Network / Timeout',
+        severity: 'critical',
+        message: 'ETIMEDOUT: Google Sheets API timed out after 30000ms',
+        suggested_fix: 'External service is slow or down. Enable Retry On Fail.',
+        exec_id: execId,
+        fingerprint: 'dawaa_1|read_catalog|network_timeout',
+        status: 'open'
+      };
+      state.errors.unshift(newErr);
+      updateTelemetry();
+      switchSheet('errors');
+
+      state.tgMessages.push({
+        id: 'tg-err-' + Date.now(),
+        type: 'alert',
+        title: '🚨 n8n Error (critical)',
+        text: `Workflow: ${newErr.workflow}\nNode: ${newErr.node}\nError: ${newErr.message}\nFix: ${newErr.suggested_fix}`
+      });
+      renderTelegram();
+
+      openModal('🚨 Critical Error Escalated to Telegram & Gmail', `
+        <p><strong>Classify Error</strong> detected a <code>critical</code> incident and executed the Error Handling workflow:</p>
+        <div class="mono" style="margin-top:10px;font-size:0.75rem;padding:12px;border-radius:10px;background:#1b0b12;border:1px solid rgba(244,63,94,0.35);color:#fecdd3;">
+          Workflow: ${newErr.workflow}<br/>
+          Node: ${newErr.node}<br/>
+          Severity: CRITICAL → Gmail Alert Triggered<br/>
+          Fingerprint: ${newErr.fingerprint}
+        </div>
+      `);
+      showToast('Critical error logged, alerted on Telegram & emailed');
+    }
+
+    // ===================== WORKFLOWS EXPLORER =====================
+    const WORKFLOW_DATA = {
+      main: {
+        lanes: [
+          {
+            title: 'Pipeline 1 — WhatsApp Customer Intake, Gemini 2.5 Flash & Auto/Pharmacist Routing',
+            height: 210,
+            nodes: [
+              { id: 'wa_trig', x: 16, y: 72, w: 118, h: 48, label: 'WhatsApp Trigger', sub: 'message event', type: 'Trigger', desc: 'Listens for incoming customer text messages or prescription images from Meta WhatsApp Cloud API.', code: 'Events: messages\nWebhook: /webhook/dawaa-wa' },
+              { id: 'norm', x: 162, y: 72, w: 118, h: 48, label: 'Normalize Msg', sub: 'Code JS', type: 'Code Node', desc: 'Standardizes text/image payloads, extracts customer_id, customer_name, and wa_phone_id.', code: 'const msg = $json.messages?.[0];\nreturn [{ json: {\n  type: msg.type,\n  customer_id: msg.from,\n  text: msg.text?.body || ""\n}}];' },
+              { id: 'is_img', x: 308, y: 72, w: 108, h: 48, label: 'Text or Image', sub: 'If Node', type: 'Condition', desc: 'Branches prescription photos to Meta Media download, or text directly to Gemini prompt builder.', code: 'Condition: {{ $json.type }} === "image"' },
+              { id: 'ai_read', x: 448, y: 72, w: 124, h: 48, label: 'AI Read Request', sub: 'Gemini 2.5 Flash', type: 'HTTP / LLM', desc: 'Extracts structured JSON { is_prescription, medicines: [{ name, qty }] } in Arabic or English.', code: 'POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent\nResponse MIME: application/json' },
+              { id: 'match', x: 604, y: 72, w: 118, h: 48, label: 'Match Catalog', sub: 'Fuzzy JS', type: 'Code Node', desc: 'Reads Dawaa Pharmacy Catalog sheet and matches extracted medicine names using Levenshtein fuzzy search.', code: 'const catalog = $("Read Catalog").all();\n// Returns matched SKUs + controlled flag' },
+              { id: 'route_otc', x: 756, y: 24, w: 128, h: 48, label: 'Update Stock', sub: 'OTC Auto-Reserve', type: 'Google Sheets + WA', desc: 'Saves reserved rows, deducts Catalog stock, and sends instant WhatsApp confirmation.', code: 'Match on: sku\nstock: {{ $json.new_stock }}\nThen → Confirm Reservation (WhatsApp)' },
+              { id: 'route_ctrl', x: 756, y: 122, w: 128, h: 48, label: 'Ask Pharmacist', sub: 'Telegram Inline', type: 'Telegram + WA', desc: 'Saves pending_pharmacist rows, posts Approve/Reject buttons to Telegram, and informs the patient.', code: 'callback_data:\napprove_{{ $json.res_id }}_{{ $json.customer_id }}\nreject_{{ $json.res_id }}_{{ $json.customer_id }}' }
+            ],
+            edges: [
+              ['wa_trig', 'norm'], ['norm', 'is_img'], ['is_img', 'ai_read'], ['ai_read', 'match'], ['match', 'route_otc'], ['match', 'route_ctrl']
+            ]
+          },
+          {
+            title: 'Pipeline 2 — Telegram Pharmacist Callback & Stock Deduction',
+            height: 200,
+            nodes: [
+              { id: 'tg_trig', x: 16, y: 70, w: 118, h: 48, label: 'Telegram Trigger', sub: 'callback_query', type: 'Trigger', desc: 'Fires immediately when a pharmacist taps Approve or Reject on a controlled drug card.', code: 'Updates: callback_query' },
+              { id: 'parse_dec', x: 162, y: 70, w: 118, h: 48, label: 'Parse Decision', sub: 'Code JS', type: 'Code Node', desc: 'Parses callback_data to extract action, group, customer, query_id, chat_id, message_id, and pharmacist username.', code: 'const q = $json.callback_query;\nconst [action, group, customer] = String(q.data || "").split("_");' },
+              { id: 'apply_dec', x: 308, y: 70, w: 118, h: 48, label: 'Apply Decision', sub: 'Code JS', type: 'Code Node', desc: 'Loads pending_pharmacist rows & Catalog, builds reservation status updates and stock deductions.', code: 'const newStatus = isApproved ? "reserved" : "rejected";\n// Outputs line_updates & stock_updates' },
+              { id: 'ans_cb', x: 454, y: 70, w: 122, h: 48, label: 'Answer & Mark', sub: 'Telegram Edit', type: 'Telegram', desc: 'Answers callback query toast and edits the Telegram message to remove buttons and stamp @pharmacist.', code: 'Answer Query + Edit Message Text:\n{{ original }} — Approved by {{ by }}' },
+              { id: 'upd_lines', x: 606, y: 70, w: 116, h: 48, label: 'Update Lines', sub: 'update: sheet', type: 'Google Sheets', desc: 'Updates Reservations sheet matched on res_id with new status and pharmacist username.', code: 'Column to match on: res_id\nstatus: {{ $json.status }}\npharmacist: {{ $json.pharmacist }}' },
+              { id: 'take_stk', x: 756, y: 24, w: 128, h: 48, label: 'Take Stock + WA', sub: 'Approved Branch', type: 'Sheets + WhatsApp', desc: 'Deducts approved quantities from Catalog and sends WhatsApp pickup confirmation using String(customer_id).', code: 'Recipient: {{ String($("Apply Decision").first().json.customer_id) }}' },
+              { id: 'rej_wa', x: 756, y: 120, w: 128, h: 48, label: 'Notify Rejected', sub: 'Rejected Branch', type: 'WhatsApp', desc: 'Notifies patient via WhatsApp when pharmacist rejects a controlled medication request.', code: 'Execute Once: ON\nMessageType: Text' }
+            ],
+            edges: [
+              ['tg_trig', 'parse_dec'], ['parse_dec', 'apply_dec'], ['apply_dec', 'ans_cb'], ['ans_cb', 'upd_lines'], ['upd_lines', 'take_stk'], ['upd_lines', 'rej_wa']
+            ]
+          }
+        ]
+      },
+      ops: {
+        lanes: [
+          {
+            title: 'Pipeline 1 — Global Error Monitor & Critical Escalation',
+            height: 150,
+            nodes: [
+              { id: 'err_trig', x: 16, y: 46, w: 116, h: 48, label: 'Error Trigger', sub: 'workflow fail', type: 'Trigger', desc: 'Linked in Dawaa 1 Settings → Error Workflow to capture any runtime failure.', code: 'Triggered automatically on execution failure.' },
+              { id: 'cls_err', x: 164, y: 46, w: 120, h: 48, label: 'Classify Error', sub: 'Code JS', type: 'Code Node', desc: 'Classifies Auth, Rate Limit, Network/Timeout, DB, and Parsing errors with fingerprint & suggested fix.', code: 'const fingerprint = `${workflow}|${node}|${type}`;\nconst epoch_minute = Math.floor(Date.now() / 60000);' },
+              { id: 'log_err', x: 316, y: 46, w: 120, h: 48, label: 'Log Error', sub: 'append: sheet', type: 'Google Sheets', desc: 'Appends structured error telemetry to the Error logs tab in Dawaa Pharmacy Data.', code: 'Maps: Time, Workflow, Node, Type, Severity, Message, Suggested Fix, Fingerprint' },
+              { id: 'tg_err', x: 468, y: 46, w: 122, h: 48, label: 'Alert Team', sub: 'Telegram', type: 'Telegram', desc: 'Posts immediate error alert with execution link and suggested fix to the ops Telegram chat.', code: 'Text: 🚨 n8n Error ({{ $json.Severity }})\nLink: {{ $json["Execution Link"] }}' },
+              { id: 'if_crit', x: 622, y: 46, w: 102, h: 48, label: 'If Critical?', sub: 'If Node', type: 'Condition', desc: 'Routes only critical errors to Gmail to avoid inbox fatigue.', code: '{{ $json.Severity }} === "critical"' },
+              { id: 'gm_err', x: 756, y: 46, w: 126, h: 48, label: 'Email Admin', sub: 'Gmail send', type: 'Gmail', desc: 'Sends high-priority critical alert email with execution URL.', code: 'Subject: [CRITICAL] n8n Error in {{ $json.Workflow }}' }
+            ],
+            edges: [
+              ['err_trig', 'cls_err'], ['cls_err', 'log_err'], ['log_err', 'tg_err'], ['tg_err', 'if_crit'], ['if_crit', 'gm_err']
+            ]
+          },
+          {
+            title: 'Pipeline 2 — 15-Minute Reservation Expiration & Restock',
+            height: 185,
+            nodes: [
+              { id: 'cron15', x: 16, y: 66, w: 120, h: 48, label: 'Every 15 Min', sub: 'Schedule', type: 'Schedule Trigger', desc: 'Runs every 15 minutes to scan active reservations for expired pickup windows.', code: 'Trigger Interval: Minutes\nMinutes Between Triggers: 15' },
+              { id: 'rd_res', x: 168, y: 66, w: 126, h: 48, label: 'Read Reservations', sub: 'read: sheet', type: 'Google Sheets', desc: 'Reads Dawaa Pharmacy Data → Reservations rows.', code: 'Operation: Get Row(s)' },
+              { id: 'rd_cat', x: 326, y: 66, w: 118, h: 48, label: 'Read Catalog', sub: 'Execute Once', type: 'Google Sheets', desc: 'Reads Catalog once (Execute Once ON) to compute accurate restock totals.', code: 'Settings → Execute Once: ON' },
+              { id: 'exp_ln', x: 480, y: 20, w: 122, h: 48, label: 'Expired lines', sub: 'Safe Date JS', type: 'Code Node', desc: 'Safely parses YYYY-MM-DD H:mm timestamps and filters overdue status === "reserved" rows.', code: 'isReserved && !isNaN(expTime) && expTime < now' },
+              { id: 'mk_exp', x: 636, y: 20, w: 118, h: 48, label: 'Mark Expired', sub: 'update: sheet', type: 'Google Sheets', desc: 'Matches on res_id and sets status to expired, then notifies patient via WhatsApp.', code: 'Match on: res_id\nstatus: expired' },
+              { id: 'rst_tot', x: 480, y: 112, w: 122, h: 48, label: 'Restock Totals', sub: 'Sum by SKU', type: 'Code Node', desc: 'Aggregates expired quantities per SKU and adds them back to current Catalog stock.', code: 'new_stock = Number(item.stock) + addQty' },
+              { id: 'ret_stk', x: 636, y: 112, w: 118, h: 48, label: 'Return Stock', sub: 'update: sheet', type: 'Google Sheets', desc: 'Matches Catalog on sku and writes back the restored stock count.', code: 'Match on: sku\nstock: {{ $json.new_stock }}' }
+            ],
+            edges: [
+              ['cron15', 'rd_res'], ['rd_res', 'rd_cat'], ['rd_cat', 'exp_ln'], ['exp_ln', 'mk_exp'], ['rd_cat', 'rst_tot'], ['rst_tot', 'ret_stk']
+            ]
+          },
+          {
+            title: 'Pipeline 3 — Daily 22:00 Low-Stock Reorder Report (Cron 0 22 * * *)',
+            height: 165,
+            nodes: [
+              { id: 'cron22', x: 16, y: 56, w: 124, h: 48, label: 'Every Day 22:00', sub: '0 22 * * *', type: 'Cron Trigger', desc: 'Fires nightly at 22:00 Africa/Cairo time to audit pharmacy inventory.', code: 'Cron Expression: 0 22 * * *\nTimezone: Africa/Cairo' },
+              { id: 'rd_stk', x: 174, y: 56, w: 120, h: 48, label: 'Read Stock', sub: 'Retry On Fail', type: 'Google Sheets', desc: 'Reads all SKUs from the Catalog sheet with Retry On Fail enabled.', code: 'Operation: Get Row(s)\nRetry On Fail: ON' },
+              { id: 'fnd_low', x: 328, y: 56, w: 126, h: 48, label: 'Find Low Stock', sub: 'Code JS', type: 'Code Node', desc: 'Filters items where stock <= reorder_level and formats Markdown & email payloads.', code: 'stock <= reorder_level\nif (lowStock.length === 0) return [];' },
+              { id: 'tg_reo', x: 494, y: 16, w: 136, h: 48, label: 'Post Reorder List', sub: 'Telegram', type: 'Telegram', desc: 'Posts formatted daily reorder checklist to the pharmacy team group.', code: 'Text: {{ $json.telegram_text }}\nParse Mode: Markdown' },
+              { id: 'gm_reo', x: 494, y: 98, w: 136, h: 48, label: 'Email Purchasing', sub: 'Gmail send', type: 'Gmail', desc: 'Sends structured purchase order alert to the purchasing email.', code: 'Subject: {{ $json.email_subject }}\nBody: {{ $json.email_body }}' }
+            ],
+            edges: [
+              ['cron22', 'rd_stk'], ['rd_stk', 'fnd_low'], ['fnd_low', 'tg_reo'], ['fnd_low', 'gm_reo']
+            ]
+          }
+        ]
+      }
+    };
+
+    function switchWorkflow(wf) {
+      state.activeWorkflow = wf;
+      document.querySelectorAll('[data-wf]').forEach(b => b.classList.toggle('active', b.dataset.wf === wf));
+      renderWorkflowGraph();
+    }
+
+    function renderWorkflowGraph() {
+      const wf = WORKFLOW_DATA[state.activeWorkflow];
+      const container = document.getElementById('wfCanvas');
+      let html = '';
+
+      wf.lanes.forEach((lane, lIdx) => {
+        const nodeMap = Object.fromEntries(lane.nodes.map(n => [n.id, n]));
+        const edgesSvg = lane.edges.map(([fromId, toId]) => {
+          const a = nodeMap[fromId];
+          const b = nodeMap[toId];
+          const x1 = a.x + a.w;
+          const y1 = a.y + a.h / 2;
+          const x2 = b.x;
+          const y2 = b.y + b.h / 2;
+          const cx = (x1 + x2) / 2;
+          const d = `M ${x1} ${y1} C ${cx} ${y1}, ${cx} ${y2}, ${x2} ${y2}`;
+          return `<path class="wf-edge" d="${d}" /><path class="wf-edge-glow" d="${d}" />`;
+        }).join('');
+
+        const nodesSvg = lane.nodes.map(n => `
+          <g class="wf-node-g" id="node-${n.id}" onclick="inspectNode('${state.activeWorkflow}', ${lIdx}, '${n.id}')">
+            <rect class="wf-node-rect" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" />
+            <circle cx="${n.x + 14}" cy="${n.y + 17}" r="4" fill="#22d3ee" />
+            <text class="wf-node-label" x="${n.x + 24}" y="${n.y + 21}">${n.label}</text>
+            <text class="wf-node-sub" x="${n.x + 14}" y="${n.y + 37}">${n.sub}</text>
+          </g>
+        `).join('');
+
+        html += `
+          <div class="wf-lane-title"><span>⚡</span><span>${lane.title}</span></div>
+          <svg class="wf-svg" viewBox="0 0 905 ${lane.height}">
+            ${edgesSvg}
+            ${nodesSvg}
+          </svg>
+        `;
+      });
+
+      container.innerHTML = html;
+      const firstNode = wf.lanes[0].nodes[0];
+      inspectNode(state.activeWorkflow, 0, firstNode.id);
+    }
+
+    function inspectNode(wfKey, laneIdx, nodeId) {
+      document.querySelectorAll('.wf-node-g').forEach(g => g.classList.remove('selected'));
+      const g = document.getElementById(`node-${nodeId}`);
+      if (g) g.classList.add('selected');
+      const node = WORKFLOW_DATA[wfKey].lanes[laneIdx].nodes.find(n => n.id === nodeId);
+      if (!node) return;
+      document.getElementById('inspTitle').textContent = node.label;
+      document.getElementById('inspType').textContent = `${node.type} · ${node.sub}`;
+      document.getElementById('inspDesc').textContent = node.desc;
+      document.getElementById('inspCode').textContent = node.code;
+    }
+
+    // ===================== BOOTSTRAP =====================
+    function init() {
+      appendWaBubble('bot', `Hello! Send the medicine name (e.g. Panadol 500) or a clear photo of the prescription.<br/><span class="arabic">ابعت اسم الدوا أو صورة واضحة للروشتة.</span>`);
+      renderTelegram();
+      updateTelemetry();
+      renderWorkflowGraph();
+    }
+
+    init();
+  </script>
+</body>
+</html>
